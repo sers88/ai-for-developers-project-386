@@ -1,7 +1,11 @@
+import type { components } from "~/api/generated/schema"
+
+type User = components["schemas"]["UserResponse"]
+
 export const useAuthStore = defineStore("auth", () => {
   const accessToken = ref<string | null>(null)
   const refreshToken = ref<string | null>(null)
-  const user = ref<{ id: string; email: string } | null>(null)
+  const user = ref<User | null>(null)
 
   const isAuthenticated = computed(() => !!accessToken.value)
 
@@ -10,7 +14,7 @@ export const useAuthStore = defineStore("auth", () => {
     refreshToken.value = refresh
   }
 
-  function setUser(u: { id: string; email: string }) {
+  function setUser(u: User) {
     user.value = u
   }
 

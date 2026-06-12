@@ -1,56 +1,34 @@
-interface LoginData {
-  email: string
-  password: string
-}
-
-interface RegisterData {
-  email: string
-  password: string
-}
-
-interface AuthResponse {
-  accessToken: string
-  refreshToken: string
-  user: { id: string; email: string }
-}
-
-interface TokenResponse {
-  accessToken: string
-}
+import { useApiClient } from "~/api/client"
 
 export const useAuth = () => {
-  const config = useRuntimeConfig()
   const router = useRouter()
   const store = useAuthStore()
+  const api = useApiClient()
 
-  async function register(data: RegisterData): Promise<AuthResponse> {
-    const response = await $fetch<AuthResponse>(`${config.public.apiBase}/api/auth/register`, {
-      method: "POST",
-      body: data,
-    })
+  async function register(data: { email: string; password: string }) {
+    const { data: response, error } = await api.POST("/api/auth/register", { body: data })
+    if (error || !response) throw new Error(error?.message || "Registration failed")
     store.setTokens(response.accessToken, response.refreshToken)
     store.setUser(response.user)
     return response
   }
 
-  async function login(data: LoginData): Promise<AuthResponse> {
-    const response = await $fetch<AuthResponse>(`${config.public.apiBase}/api/auth/login`, {
-      method: "POST",
-      body: data,
-    })
+  async function login(data: { email: string; password: string }) {
+    const { data: response, error } = await api.POST("/api/auth/login", { body: data })
+    if (error || !response) throw new Error(error?.message || "Login failed")
     store.setTokens(response.accessToken, response.refreshToken)
     store.setUser(response.user)
     return response
   }
 
-  async function refreshAccessToken(): Promise<string> {
+  async function refreshAccessToken() {
     const token = store.refreshToken
     if (!token) throw new Error("No refresh token")
 
-    const response = await $fetch<TokenResponse>(`${config.public.apiBase}/api/auth/refresh`, {
-      method: "POST",
+    const { data: response, error } = await api.POST("/api/auth/refresh", {
       body: { refreshToken: token },
     })
+    if (error || !response) throw new Error(error?.message || "Token refresh failed")
     store.accessToken = response.accessToken
     return response.accessToken
   }
