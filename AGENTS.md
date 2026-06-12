@@ -51,7 +51,15 @@ npm run build                    # production build
 - `.env` (gitignored) holds Docker Compose variables.
 - `.env.example` is the template — update both when adding vars.
 - Backend env vars: `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD`, `SPRING_JPA_HIBERNATE_DDL_AUTO`, `JWT_SECRET`.
+- Google OAuth vars: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI`, `FRONTEND_URL`.
 - Frontend env var: `NUXT_PUBLIC_API_BASE`.
+
+## Google OAuth
+- **Flow**: user clicks "Sign in with Google" → frontend redirects to `GET /api/auth/oauth2/google` → backend redirects to Google → Google redirects to `GET /api/auth/oauth2/google/callback?code=...` → backend exchanges code, creates/finds user, issues JWT → redirects to `{FRONTEND_URL}/auth/callback?accessToken=...&refreshToken=...&email=...`
+- **User entity**: `password_hash` is nullable (OAuth users have no password). `google_id` (unique), `name`, `avatar_url` are optional fields.
+- **Linking**: if a user exists by email (from password registration), Google OAuth links the `google_id` and updates `name`/`avatar_url`. If user exists by `google_id`, logs in directly.
+- **`@EnableConfigurationProperties(GoogleOAuth2Properties::class)`** is on `AiForDevApplication` — properties prefix: `app.oauth2.google`.
+- **Tests**: `OAuthIntegrationTest` mocks `OAuth2Service` via `@MockitoBean`. Integration tests require `app.oauth2.google.*` properties in `@TestPropertySource`.
 
 ## Auto-imports (Nuxt)
 - `composables/use*.ts` → available without import in `.vue` files
