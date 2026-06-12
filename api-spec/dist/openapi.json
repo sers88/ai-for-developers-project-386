@@ -1,0 +1,35 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "AiForDev API",
+    "version": "0.1.0",
+    "description": "REST API for the AiForDevelopers platform"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8080/api",
+      "description": "Local backend"
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "auth",
+      "description": "Authentication & registration"
+    }
+  ],
+  "paths": {},
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  }
+}
