@@ -1,0 +1,42 @@
+<script setup lang="ts">
+definePageMeta({
+  layout: false,
+})
+
+const { submit, errors, isSubmitting, generalError } = useRegisterForm()
+</script>
+
+<template>
+  <div class="page">
+    <h1>Register</h1>
+    <form @submit.prevent="submit">
+      <div>
+        <label for="email">Email</label>
+        <input
+          id="email"
+          name="email"
+          type="email"
+          placeholder="email@example.com"
+        >
+        <p v-if="errors.email" class="error">{{ errors.email }}</p>
+      </div>
+      <div>
+        <label for="password">Password</label>
+        <input
+          id="password"
+          name="password"
+          type="password"
+          placeholder="Min. 6 characters"
+        >
+        <p v-if="errors.password" class="error">{{ errors.password }}</p>
+      </div>
+      <p v-if="generalError" class="error">{{ generalError }}</p>
+      <button type="submit" :disabled="isSubmitting">
+        {{ isSubmitting ? "Loading..." : "Register" }}
+      </button>
+    </form>
+    <p>
+      Already have an account? <NuxtLink to="/login">Login</NuxtLink>
+    </p>
+  </div>
+</template>
