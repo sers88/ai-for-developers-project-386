@@ -22,7 +22,7 @@ jobs:
         with:
           node-version: 22
 
-      - run: npm ci
+      - run: npm install
 
       - name: Lint OpenAPI spec
         run: npm run spec:lint
@@ -57,5 +57,7 @@ jobs:
         run: cp api-spec/dist/openapi.json backend/src/test/resources/openapi.json
 
       - name: Build with Gradle
-        run: ./gradlew build -x test
+        run: |
+          chmod +x gradlew
+          ./gradlew build -x test
         working-directory: backend
