@@ -61,6 +61,19 @@ npm run build                    # production build
 - **`@EnableConfigurationProperties(GoogleOAuth2Properties::class)`** is on `AiForDevApplication` — properties prefix: `app.oauth2.google`.
 - **Tests**: `OAuthIntegrationTest` mocks `OAuth2Service` via `@MockitoBean`. Integration tests require `app.oauth2.google.*` properties in `@TestPropertySource`.
 
+## Design First (OpenAPI)
+
+- **Spec directory**: `api-spec/` in repo root — single source of truth for API contracts.
+- **Config**: `api-spec/redocly.yaml` extends `recommended` with `info-license`, `operation-4xx-response`, `no-server-example.com` off.
+- **Workflow**:
+  ```sh
+  npm run spec:lint      # Validate OpenAPI spec with Redocly
+  npm run spec:bundle    # Bundle multi-file spec → api-spec/dist/openapi.json
+  npm run generate:api   # Generate TypeScript types → frontend/api/generated/schema.d.ts
+  ```
+- **Full chain after editing spec**: `npm run spec:lint && npm run spec:bundle && npm run generate:api`
+- **Generated files committed**: `api-spec/dist/openapi.json` and `frontend/api/generated/schema.d.ts` are committed to git for CI stability.
+
 ## Auto-imports (Nuxt)
 - `composables/use*.ts` → available without import in `.vue` files
 - `stores/*.ts` → Pinia stores auto-imported via `@pinia/nuxt`
