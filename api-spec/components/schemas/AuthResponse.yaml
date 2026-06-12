@@ -1,0 +1,14 @@
+type: object
+properties:
+  accessToken:
+    type: string
+    description: JWT access token
+  refreshToken:
+    type: string
+    description: JWT refresh token
+  user:
+    $ref: "./UserResponse.yaml"
+required:
+  - accessToken
+  - refreshToken
+  - user

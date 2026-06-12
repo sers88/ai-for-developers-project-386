@@ -2,5 +2,6 @@ extends:
   - recommended
 rules:
   info-license: off
+  operation-2xx-response: off
   operation-4xx-response: off
   no-server-example.com: off
