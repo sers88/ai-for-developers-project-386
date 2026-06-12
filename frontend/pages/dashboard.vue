@@ -1,21 +1,14 @@
 <script setup lang="ts">
+import { useApiClient } from "~/api/client"
+
 definePageMeta({
   middleware: ["auth"],
 })
 
-const config = useRuntimeConfig()
 const store = useAuthStore()
+const api = useApiClient()
 
-interface MeResponse {
-  id: string
-  email: string
-}
-
-const { data } = useFetch<MeResponse>(`${config.public.apiBase}/api/me`, {
-  headers: {
-    Authorization: `Bearer ${store.accessToken}`,
-  },
-})
+const { data: me } = await api.GET("/api/me")
 
 async function logout() {
   store.clearAuth()
@@ -26,7 +19,7 @@ async function logout() {
 <template>
   <div class="page">
     <h1>Dashboard</h1>
-    <p v-if="data">Welcome, {{ data.email }}</p>
+    <p v-if="me">Welcome, {{ me.email }}</p>
     <button type="button" @click="logout">Logout</button>
   </div>
 </template>
