@@ -1,1 +1,145 @@
-# Auth endpoints — to be defined
+paths:
+  /api/auth/register:
+    post:
+      tags:
+        - auth
+      summary: Register a new user
+      operationId: register
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/RegisterRequest.yaml"
+      responses:
+        "201":
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: "../components/schemas/AuthResponse.yaml"
+        "400":
+          description: Validation error or email already registered
+          content:
+            application/json:
+              schema:
+                $ref: "../components/schemas/ErrorResponse.yaml"
+              examples:
+                emailExists:
+                  summary: Email already registered
+                  value:
+                    message: "Email already registered"
+                validation:
+                  summary: Validation error
+                  value:
+                    message: "email: Invalid email format"
+
+  /api/auth/login:
+    post:
+      tags:
+        - auth
+      summary: Authenticate user
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/LoginRequest.yaml"
+      responses:
+        "200":
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                $ref: "../components/schemas/AuthResponse.yaml"
+        "400":
+          description: Invalid credentials or validation error
+          content:
+            application/json:
+              schema:
+                $ref: "../components/schemas/ErrorResponse.yaml"
+              examples:
+                invalidCredentials:
+                  summary: Invalid email or password
+                  value:
+                    message: "Invalid email or password"
+                validation:
+                  summary: Validation error
+                  value:
+                    message: "email: Invalid email format"
+
+  /api/auth/refresh:
+    post:
+      tags:
+        - auth
+      summary: Refresh access token
+      operationId: refreshToken
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/RefreshRequest.yaml"
+      responses:
+        "200":
+          description: New access token issued
+          content:
+            application/json:
+              schema:
+                $ref: "../components/schemas/TokenResponse.yaml"
+        "400":
+          description: Invalid, expired, or missing refresh token
+          content:
+            application/json:
+              schema:
+                $ref: "../components/schemas/ErrorResponse.yaml"
+              examples:
+                invalid:
+                  summary: Invalid refresh token
+                  value:
+                    message: "Invalid refresh token"
+                notFound:
+                  summary: Refresh token not found
+                  value:
+                    message: "Refresh token not found"
+                expired:
+                  summary: Refresh token expired
+                  value:
+                    message: "Refresh token expired"
+                missing:
+                  summary: Refresh token is required
+                  value:
+                    message: "refreshToken: Refresh token is required"
+
+  /api/auth/oauth2/google:
+    get:
+      tags:
+        - auth
+      summary: Initiate Google OAuth2 flow
+      operationId: googleOAuth
+      responses:
+        "302":
+          description: Redirect to Google OAuth consent screen
+
+  /api/auth/oauth2/google/callback:
+    get:
+      tags:
+        - auth
+      summary: Google OAuth2 callback
+      operationId: googleOAuthCallback
+      parameters:
+        - name: code
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Authorization code from Google
+      responses:
+        "302":
+          description: Redirect to frontend with tokens
+          headers:
+            Location:
+              schema:
+                type: string
+              description: "{FRONTEND_URL}/auth/callback?accessToken=...&refreshToken=...&email=..."

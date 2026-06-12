@@ -1,0 +1,7 @@
+type: object
+properties:
+  message:
+    type: string
+    description: Human-readable error message
+required:
+  - message
