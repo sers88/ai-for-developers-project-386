@@ -17,8 +17,14 @@ class User(
     val id: UUID? = null,
     @Column(nullable = false, unique = true)
     val email: String,
-    @Column(name = "password_hash", nullable = false)
-    val passwordHash: String,
+    @Column(name = "password_hash")
+    val passwordHash: String? = null,
+    @Column(name = "google_id", unique = true)
+    val googleId: String? = null,
+    @Column
+    val name: String? = null,
+    @Column(name = "avatar_url")
+    val avatarUrl: String? = null,
     @Column(name = "created_at", nullable = false, updatable = false)
     val createdAt: Instant = Instant.now(),
 )
