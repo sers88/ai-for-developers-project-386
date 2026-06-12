@@ -7,55 +7,53 @@ on:
     branches: [main]
 
 jobs:
-  backend:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up JDK 21
-        uses: actions/setup-java@v4
-        with:
-          java-version: "21"
-          distribution: "temurin"
-
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
-
-      - name: Lint
-        run: chmod +x gradlew && ./gradlew ktlintCheck
-        working-directory: backend
-
-      - name: Build
-        run: ./gradlew build -x test
-        working-directory: backend
-
   frontend:
+    name: Frontend
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
-          node-version: "22"
-          cache: "npm"
-          cache-dependency-path: frontend/package-lock.json
+          node-version: 22
 
-      - name: Install dependencies
-        run: npm install
-        working-directory: frontend
+      - run: npm ci
 
-      - name: Lint
+      - name: Lint OpenAPI spec
+        run: npm run spec:lint
+
+      - name: Bundle OpenAPI spec
+        run: npm run spec:bundle
+
+      - name: Lint frontend code
         run: npm run lint
-        working-directory: frontend
 
-      - name: Prepare Nuxt
+      - name: Generate Nuxt types
         run: npx nuxt prepare
-        working-directory: frontend
 
-      - name: Type check
+      - name: Typecheck
         run: npm run typecheck
-        working-directory: frontend
 
       - name: Build
         run: npm run build
-        working-directory: frontend
+
+  backend:
+    name: Backend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          java-version: 21
+          distribution: temurin
+
+      - name: Copy OpenAPI spec to test resources
+        run: cp api-spec/dist/openapi.json backend/src/test/resources/openapi.json
+
+      - name: Build with Gradle
+        run: ./gradlew build -x test
+        working-directory: backend
