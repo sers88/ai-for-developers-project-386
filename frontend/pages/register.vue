@@ -3,7 +3,8 @@ definePageMeta({
   layout: false,
 })
 
-const { submit, errors, isSubmitting, generalError } = useRegisterForm()
+ const { submit, errors, isSubmitting, generalError } = useRegisterForm()
+const { redirectToGoogle } = useGoogleAuth()
 </script>
 
 <template>
@@ -35,6 +36,12 @@ const { submit, errors, isSubmitting, generalError } = useRegisterForm()
         {{ isSubmitting ? "Loading..." : "Register" }}
       </button>
     </form>
+    <div class="oauth-divider">
+      <span>or</span>
+    </div>
+    <button class="google-btn" @click="redirectToGoogle">
+      Sign in with Google
+    </button>
     <p>
       Already have an account? <NuxtLink to="/login">Login</NuxtLink>
     </p>
