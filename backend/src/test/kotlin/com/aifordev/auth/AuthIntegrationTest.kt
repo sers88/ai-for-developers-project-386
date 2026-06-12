@@ -1,12 +1,15 @@
 package com.aifordev.auth
 
+import com.aifordev.contract.ContractValidator
 import com.aifordev.dto.AuthResponse
 import com.aifordev.dto.LoginRequest
 import com.aifordev.dto.RefreshRequest
 import com.aifordev.dto.RegisterRequest
 import com.aifordev.dto.TokenResponse
 import com.aifordev.dto.UserResponse
+import com.fasterxml.jackson.databind.ObjectMapper
 import org.junit.jupiter.api.Test
+import org.openapi4j.operation.validator.model.Request
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.web.client.TestRestTemplate
@@ -39,6 +42,8 @@ class AuthIntegrationTest {
     @Autowired
     private lateinit var restTemplate: TestRestTemplate
 
+    private val mapper = ObjectMapper()
+
     @Test
     fun `register with valid data returns tokens and user`() {
         val request = RegisterRequest(email = "test@example.com", password = "password123")
@@ -53,6 +58,9 @@ class AuthIntegrationTest {
         assertTrue(body.refreshToken.isNotBlank())
         assertEquals("test@example.com", body.user.email)
         assertTrue(body.user.id.isNotBlank())
+
+        val bodyJson = mapper.writeValueAsString(body)
+        ContractValidator.validateResponse("/api/auth/register", Request.Method.POST, 201, bodyJson)
     }
 
     @Test
@@ -64,6 +72,10 @@ class AuthIntegrationTest {
         val response = restTemplate.postForEntity("/api/auth/register", entity, Map::class.java)
 
         assertEquals(HttpStatus.BAD_REQUEST, response.statusCode)
+        val body = response.body
+        assertNotNull(body)
+        val bodyJson = mapper.writeValueAsString(body)
+        ContractValidator.validateResponse("/api/auth/register", Request.Method.POST, 400, bodyJson)
     }
 
     @Test
@@ -74,6 +86,10 @@ class AuthIntegrationTest {
         val response = restTemplate.postForEntity("/api/auth/register", entity, Map::class.java)
 
         assertEquals(HttpStatus.BAD_REQUEST, response.statusCode)
+        val body = response.body
+        assertNotNull(body)
+        val bodyJson = mapper.writeValueAsString(body)
+        ContractValidator.validateResponse("/api/auth/register", Request.Method.POST, 400, bodyJson)
     }
 
     @Test
@@ -84,6 +100,10 @@ class AuthIntegrationTest {
         val response = restTemplate.postForEntity("/api/auth/register", entity, Map::class.java)
 
         assertEquals(HttpStatus.BAD_REQUEST, response.statusCode)
+        val body = response.body
+        assertNotNull(body)
+        val bodyJson = mapper.writeValueAsString(body)
+        ContractValidator.validateResponse("/api/auth/register", Request.Method.POST, 400, bodyJson)
     }
 
     @Test
@@ -102,6 +122,9 @@ class AuthIntegrationTest {
         assertTrue(body.accessToken.isNotBlank())
         assertTrue(body.refreshToken.isNotBlank())
         assertEquals("login@example.com", body.user.email)
+
+        val bodyJson = mapper.writeValueAsString(body)
+        ContractValidator.validateResponse("/api/auth/login", Request.Method.POST, 200, bodyJson)
     }
 
     @Test
@@ -115,6 +138,10 @@ class AuthIntegrationTest {
         val response = restTemplate.postForEntity("/api/auth/login", entity, Map::class.java)
 
         assertEquals(HttpStatus.BAD_REQUEST, response.statusCode)
+        val body = response.body
+        assertNotNull(body)
+        val bodyJson = mapper.writeValueAsString(body)
+        ContractValidator.validateResponse("/api/auth/login", Request.Method.POST, 400, bodyJson)
     }
 
     @Test
@@ -125,6 +152,10 @@ class AuthIntegrationTest {
         val response = restTemplate.postForEntity("/api/auth/login", entity, Map::class.java)
 
         assertEquals(HttpStatus.BAD_REQUEST, response.statusCode)
+        val body = response.body
+        assertNotNull(body)
+        val bodyJson = mapper.writeValueAsString(body)
+        ContractValidator.validateResponse("/api/auth/login", Request.Method.POST, 400, bodyJson)
     }
 
     @Test
@@ -142,6 +173,9 @@ class AuthIntegrationTest {
         val body = response.body
         assertNotNull(body)
         assertTrue(body.accessToken.isNotBlank())
+
+        val bodyJson = mapper.writeValueAsString(body)
+        ContractValidator.validateResponse("/api/auth/refresh", Request.Method.POST, 200, bodyJson)
     }
 
     @Test
@@ -152,6 +186,10 @@ class AuthIntegrationTest {
         val response = restTemplate.postForEntity("/api/auth/refresh", entity, Map::class.java)
 
         assertEquals(HttpStatus.BAD_REQUEST, response.statusCode)
+        val body = response.body
+        assertNotNull(body)
+        val bodyJson = mapper.writeValueAsString(body)
+        ContractValidator.validateResponse("/api/auth/refresh", Request.Method.POST, 400, bodyJson)
     }
 
     @Test
@@ -171,6 +209,9 @@ class AuthIntegrationTest {
         assertNotNull(body)
         assertEquals("me@example.com", body.email)
         assertTrue(body.id.isNotBlank())
+
+        val bodyJson = mapper.writeValueAsString(body)
+        ContractValidator.validateResponse("/api/me", Request.Method.GET, 200, bodyJson)
     }
 
     @Test
@@ -178,6 +219,7 @@ class AuthIntegrationTest {
         val response = restTemplate.getForEntity("/api/me", Map::class.java)
 
         assertEquals(HttpStatus.UNAUTHORIZED, response.statusCode)
+        ContractValidator.validateResponse("/api/me", Request.Method.GET, 401)
     }
 
     @Test
@@ -189,5 +231,6 @@ class AuthIntegrationTest {
         val response = restTemplate.exchange("/api/me", HttpMethod.GET, entity, Map::class.java)
 
         assertEquals(HttpStatus.UNAUTHORIZED, response.statusCode)
+        ContractValidator.validateResponse("/api/me", Request.Method.GET, 401)
     }
 }

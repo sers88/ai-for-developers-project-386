@@ -43,6 +43,7 @@ dependencies {
     testImplementation("org.springframework.security:spring-security-test")
     testImplementation("com.h2database:h2")
     testImplementation("org.jetbrains.kotlin:kotlin-test")
+    testImplementation("org.openapi4j:openapi-operation-validator:1.0.7")
 }
 
 kotlin {
