@@ -65,14 +65,15 @@ test.describe("Happy path: register → schedule → event type → book → can
     await page.locator("#title").fill("E2E Consultation")
     await page.locator("#duration").fill("30")
 
-    const scheduleOption = page.locator("#scheduleId option").nth(1)
-    const hasSchedule = await scheduleOption.count()
-    if (hasSchedule > 0) {
-      const scheduleValue = await scheduleOption.getAttribute("value")
-      if (scheduleValue) {
-        await page.locator("#scheduleId").selectOption(scheduleValue)
-      }
-    }
+    // Wait for schedules to load in dropdown, then select first one
+    await page.waitForFunction(
+      () => {
+        const sel = document.querySelector("#scheduleId")
+        return sel !== null && sel.querySelectorAll("option").length > 1
+      },
+      { timeout: 10_000 },
+    )
+    await page.locator("#scheduleId").selectOption({ index: 1 })
 
     await page.locator('button[type="submit"]').click()
     await expect(page).toHaveURL(/\/event-types$/, { timeout: 15_000 })
