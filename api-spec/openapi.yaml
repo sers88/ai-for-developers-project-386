@@ -17,6 +17,8 @@ tags:
     description: "Schedule & availability management"
   - name: calendar
     description: "Google Calendar integration"
+  - name: eventTypes
+    description: "Event type management"
 paths:
   /api/auth/register:
     $ref: "./paths/auth.yaml#/paths/~1api~1auth~1register"
@@ -44,6 +46,10 @@ paths:
     $ref: "./paths/calendar.yaml#/paths/~1api~1calendar~1google~1events"
   /api/calendar/google/events/{googleEventId}:
     $ref: "./paths/calendar.yaml#/paths/~1api~1calendar~1google~1events~1{googleEventId}"
+  /api/event-types:
+    $ref: "./paths/event-types.yaml#/paths/~1api~1event-types"
+  /api/event-types/{id}:
+    $ref: "./paths/event-types.yaml#/paths/~1api~1event-types~1{id}"
 components:
   securitySchemes:
     bearerAuth:

@@ -32,6 +32,10 @@
     {
       "name": "calendar",
       "description": "Google Calendar integration"
+    },
+    {
+      "name": "eventTypes",
+      "description": "Event type management"
     }
   ],
   "paths": {
@@ -760,6 +764,278 @@
           }
         }
       }
+    },
+    "/api/event-types": {
+      "post": {
+        "tags": [
+          "eventTypes"
+        ],
+        "summary": "Create a new event type",
+        "operationId": "createEventType",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateEventTypeRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Event type created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventTypeResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "validation": {
+                    "value": {
+                      "message": "title: Title is required"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized — missing or invalid JWT"
+          },
+          "409": {
+            "description": "Event type with this slug already exists for this user",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "duplicateSlug": {
+                    "value": {
+                      "message": "Event type with slug 'my-event' already exists"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "eventTypes"
+        ],
+        "summary": "List event types for current user",
+        "operationId": "listEventTypes",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of user event types",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EventTypeResponse"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized — missing or invalid JWT"
+          }
+        }
+      }
+    },
+    "/api/event-types/{id}": {
+      "get": {
+        "tags": [
+          "eventTypes"
+        ],
+        "summary": "Get event type by ID",
+        "operationId": "getEventType",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Event type UUID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Event type details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventTypeResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized — missing or invalid JWT"
+          },
+          "404": {
+            "description": "Event type not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "eventTypes"
+        ],
+        "summary": "Update an event type",
+        "operationId": "updateEventType",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Event type UUID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateEventTypeRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Event type updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventTypeResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized — missing or invalid JWT"
+          },
+          "404": {
+            "description": "Event type not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Event type with this slug already exists for this user",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "eventTypes"
+        ],
+        "summary": "Delete an event type",
+        "operationId": "deleteEventType",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Event type UUID"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Event type deleted"
+          },
+          "401": {
+            "description": "Unauthorized — missing or invalid JWT"
+          },
+          "404": {
+            "description": "Event type not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1174,6 +1450,141 @@
           "start",
           "end"
         ]
+      },
+      "EventTypeResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "EventType UUID"
+          },
+          "userId": {
+            "type": "string",
+            "description": "Owner user UUID"
+          },
+          "title": {
+            "type": "string",
+            "description": "Event type title"
+          },
+          "description": {
+            "type": "string",
+            "description": "Event type description"
+          },
+          "slug": {
+            "type": "string",
+            "description": "URL-friendly slug generated from title"
+          },
+          "duration": {
+            "type": "integer",
+            "description": "Duration in minutes"
+          },
+          "scheduleId": {
+            "type": "string",
+            "description": "Associated schedule UUID"
+          },
+          "scheduleName": {
+            "type": "string",
+            "description": "Associated schedule name"
+          },
+          "bufferBefore": {
+            "type": "integer",
+            "description": "Buffer before event in minutes"
+          },
+          "bufferAfter": {
+            "type": "integer",
+            "description": "Buffer after event in minutes"
+          },
+          "bookingUrl": {
+            "type": "string",
+            "description": "Public booking link for this event type"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation timestamp"
+          }
+        },
+        "required": [
+          "id",
+          "userId",
+          "title",
+          "slug",
+          "duration",
+          "bufferBefore",
+          "bufferAfter",
+          "bookingUrl",
+          "createdAt"
+        ]
+      },
+      "CreateEventTypeRequest": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Event type title"
+          },
+          "description": {
+            "type": "string",
+            "description": "Event type description"
+          },
+          "duration": {
+            "type": "integer",
+            "minimum": 5,
+            "description": "Duration in minutes (min 5)"
+          },
+          "scheduleId": {
+            "type": "string",
+            "description": "Associated schedule UUID"
+          },
+          "bufferBefore": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Buffer before event in minutes"
+          },
+          "bufferAfter": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Buffer after event in minutes"
+          }
+        },
+        "required": [
+          "title",
+          "duration"
+        ]
+      },
+      "UpdateEventTypeRequest": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Event type title"
+          },
+          "description": {
+            "type": "string",
+            "description": "Event type description"
+          },
+          "duration": {
+            "type": "integer",
+            "minimum": 5,
+            "description": "Duration in minutes (min 5)"
+          },
+          "scheduleId": {
+            "type": "string",
+            "description": "Associated schedule UUID (empty string to unlink)"
+          },
+          "bufferBefore": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Buffer before event in minutes"
+          },
+          "bufferAfter": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Buffer after event in minutes"
+          }
+        }
       }
     }
   }

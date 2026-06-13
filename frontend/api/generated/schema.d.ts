@@ -228,6 +228,43 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/event-types": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List event types for current user */
+        get: operations["listEventTypes"];
+        put?: never;
+        /** Create a new event type */
+        post: operations["createEventType"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/event-types/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get event type by ID */
+        get: operations["getEventType"];
+        /** Update an event type */
+        put: operations["updateEventType"];
+        post?: never;
+        /** Delete an event type */
+        delete: operations["deleteEventType"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -397,6 +434,63 @@ export interface components {
              * @description Event end time
              */
             end: string;
+        };
+        EventTypeResponse: {
+            /** @description EventType UUID */
+            id: string;
+            /** @description Owner user UUID */
+            userId: string;
+            /** @description Event type title */
+            title: string;
+            /** @description Event type description */
+            description?: string;
+            /** @description URL-friendly slug generated from title */
+            slug: string;
+            /** @description Duration in minutes */
+            duration: number;
+            /** @description Associated schedule UUID */
+            scheduleId?: string;
+            /** @description Associated schedule name */
+            scheduleName?: string;
+            /** @description Buffer before event in minutes */
+            bufferBefore: number;
+            /** @description Buffer after event in minutes */
+            bufferAfter: number;
+            /** @description Public booking link for this event type */
+            bookingUrl: string;
+            /**
+             * Format: date-time
+             * @description Creation timestamp
+             */
+            createdAt: string;
+        };
+        CreateEventTypeRequest: {
+            /** @description Event type title */
+            title: string;
+            /** @description Event type description */
+            description?: string;
+            /** @description Duration in minutes (min 5) */
+            duration: number;
+            /** @description Associated schedule UUID */
+            scheduleId?: string;
+            /** @description Buffer before event in minutes */
+            bufferBefore?: number;
+            /** @description Buffer after event in minutes */
+            bufferAfter?: number;
+        };
+        UpdateEventTypeRequest: {
+            /** @description Event type title */
+            title?: string;
+            /** @description Event type description */
+            description?: string;
+            /** @description Duration in minutes (min 5) */
+            duration?: number;
+            /** @description Associated schedule UUID (empty string to unlink) */
+            scheduleId?: string;
+            /** @description Buffer before event in minutes */
+            bufferBefore?: number;
+            /** @description Buffer after event in minutes */
+            bufferAfter?: number;
         };
     };
     responses: never;
@@ -913,6 +1007,219 @@ export interface operations {
                 content?: never;
             };
             /** @description Event not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    listEventTypes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description List of user event types */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EventTypeResponse"][];
+                };
+            };
+            /** @description Unauthorized — missing or invalid JWT */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    createEventType: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateEventTypeRequest"];
+            };
+        };
+        responses: {
+            /** @description Event type created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EventTypeResponse"];
+                };
+            };
+            /** @description Validation error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized — missing or invalid JWT */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Event type with this slug already exists for this user */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getEventType: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Event type UUID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Event type details */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EventTypeResponse"];
+                };
+            };
+            /** @description Unauthorized — missing or invalid JWT */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Event type not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    updateEventType: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Event type UUID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateEventTypeRequest"];
+            };
+        };
+        responses: {
+            /** @description Event type updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EventTypeResponse"];
+                };
+            };
+            /** @description Validation error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized — missing or invalid JWT */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Event type not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Event type with this slug already exists for this user */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    deleteEventType: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Event type UUID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Event type deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized — missing or invalid JWT */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Event type not found */
             404: {
                 headers: {
                     [name: string]: unknown;
