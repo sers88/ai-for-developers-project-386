@@ -312,7 +312,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /**
+         * List bookings for the authenticated user
+         * @description Returns the authenticated user's bookings, optionally filtered by upcoming or past.
+         */
+        get: operations["listBookings"];
         put?: never;
         /**
          * Create a booking
@@ -320,6 +324,26 @@ export interface paths {
          */
         post: operations["createBooking"];
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/bookings/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Cancel a booking
+         * @description Cancels a booking. The authenticated owner of the event type may cancel without a token. Guests cancel by providing the cancelToken issued in the confirmation email. Cancelling also removes the associated Google Calendar event and sends cancellation emails to both parties.
+         */
+        delete: operations["cancelBooking"];
         options?: never;
         head?: never;
         patch?: never;
@@ -592,31 +616,6 @@ export interface components {
             /** @description Name of the event type owner */
             ownerName?: string;
         };
-        CreateBookingRequest: {
-            /** @description EventType UUID to book */
-            eventTypeId: string;
-            /** @description Guest full name */
-            guestName: string;
-            /**
-             * Format: email
-             * @description Guest email address
-             */
-            guestEmail: string;
-            /** @description Optional notes from the guest */
-            notes?: string;
-            /**
-             * Format: date-time
-             * @description Selected slot start time (ISO 8601)
-             */
-            startTime: string;
-            /**
-             * Format: date-time
-             * @description Selected slot end time (ISO 8601)
-             */
-            endTime: string;
-            /** @description Guest IANA timezone (e.g. Europe/Moscow) */
-            timezone?: string;
-        };
         BookingResponse: {
             /** @description Booking UUID */
             id: string;
@@ -646,10 +645,40 @@ export interface components {
              */
             status: "CONFIRMED" | "CANCELLED";
             /**
+             * Format: uuid
+             * @description Token used by guests to cancel a booking via the email link
+             */
+            cancelToken: string;
+            /**
              * Format: date-time
              * @description Creation timestamp
              */
             createdAt: string;
+        };
+        CreateBookingRequest: {
+            /** @description EventType UUID to book */
+            eventTypeId: string;
+            /** @description Guest full name */
+            guestName: string;
+            /**
+             * Format: email
+             * @description Guest email address
+             */
+            guestEmail: string;
+            /** @description Optional notes from the guest */
+            notes?: string;
+            /**
+             * Format: date-time
+             * @description Selected slot start time (ISO 8601)
+             */
+            startTime: string;
+            /**
+             * Format: date-time
+             * @description Selected slot end time (ISO 8601)
+             */
+            endTime: string;
+            /** @description Guest IANA timezone (e.g. Europe/Moscow) */
+            timezone?: string;
         };
     };
     responses: never;
@@ -1458,6 +1487,36 @@ export interface operations {
             };
         };
     };
+    listBookings: {
+        parameters: {
+            query?: {
+                /** @description Filter bookings by upcoming (start time in the future) or past. */
+                status?: "upcoming" | "past";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description List of bookings */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BookingResponse"][];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     createBooking: {
         parameters: {
             query?: never;
@@ -1499,6 +1558,59 @@ export interface operations {
                 };
             };
             /** @description Slot already booked */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    cancelBooking: {
+        parameters: {
+            query?: {
+                /** @description Cancel token (required for unauthenticated guests) */
+                token?: string;
+            };
+            header?: never;
+            path: {
+                /** @description Booking UUID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Booking cancelled */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BookingResponse"];
+                };
+            };
+            /** @description Unauthorized — owner auth or valid cancel token required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Booking not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Booking already cancelled */
             409: {
                 headers: {
                     [name: string]: unknown;

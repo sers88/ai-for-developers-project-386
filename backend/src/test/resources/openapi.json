@@ -36,6 +36,14 @@
     {
       "name": "eventTypes",
       "description": "Event type management"
+    },
+    {
+      "name": "bookings",
+      "description": "Booking management"
+    },
+    {
+      "name": "public",
+      "description": "Public endpoints (no auth)"
     }
   ],
   "paths": {
@@ -1036,6 +1044,314 @@
           }
         }
       }
+    },
+    "/api/event-types/{id}/availability": {
+      "get": {
+        "tags": [
+          "eventTypes"
+        ],
+        "summary": "Get available time slots for a date",
+        "description": "Returns available booking slots for the given date, accounting for schedule availability, Google Calendar busy slots, existing bookings, and buffers",
+        "operationId": "getAvailability",
+        "security": [],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Event type UUID"
+          },
+          {
+            "name": "date",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "description": "Date to check (YYYY-MM-DD)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Available time slots",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AvailabilitySlotsResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Event type not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/public/{userId}/{slug}": {
+      "get": {
+        "tags": [
+          "public"
+        ],
+        "summary": "Get public event type info",
+        "description": "Returns event type details for the public booking page (no authentication required)",
+        "operationId": "getPublicEventType",
+        "security": [],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Owner user UUID"
+          },
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Event type slug"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Public event type details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicEventTypeResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Event type not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/bookings": {
+      "get": {
+        "tags": [
+          "bookings"
+        ],
+        "summary": "List bookings for the authenticated user",
+        "description": "Returns the authenticated user's bookings, optionally filtered by upcoming or past.",
+        "operationId": "listBookings",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "upcoming",
+                "past"
+              ],
+              "default": "upcoming"
+            },
+            "description": "Filter bookings by upcoming (start time in the future) or past."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of bookings",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BookingResponse"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "bookings"
+        ],
+        "summary": "Create a booking",
+        "description": "Creates a new booking for a public event type (no authentication required)",
+        "operationId": "createBooking",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBookingRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Booking created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookingResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "validation": {
+                    "value": {
+                      "message": "guestName: Guest name is required"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Event type not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Slot already booked",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "slotTaken": {
+                    "value": {
+                      "message": "This time slot is already booked"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/bookings/{id}": {
+      "delete": {
+        "tags": [
+          "bookings"
+        ],
+        "summary": "Cancel a booking",
+        "description": "Cancels a booking. The authenticated owner of the event type may cancel without a token. Guests cancel by providing the cancelToken issued in the confirmation email. Cancelling also removes the associated Google Calendar event and sends cancellation emails to both parties.\n",
+        "operationId": "cancelBooking",
+        "security": [],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Booking UUID"
+          },
+          {
+            "name": "token",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Cancel token (required for unauthenticated guests)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Booking cancelled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookingResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized — owner auth or valid cancel token required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Booking not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Booking already cancelled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "alreadyCancelled": {
+                    "value": {
+                      "message": "Booking is already cancelled"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1585,6 +1901,208 @@
             "description": "Buffer after event in minutes"
           }
         }
+      },
+      "AvailabilitySlot": {
+        "type": "object",
+        "properties": {
+          "start": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Slot start time (ISO 8601)"
+          },
+          "end": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Slot end time (ISO 8601)"
+          }
+        },
+        "required": [
+          "start",
+          "end"
+        ]
+      },
+      "AvailabilitySlotsResponse": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date",
+            "description": "The date for which slots are returned (YYYY-MM-DD)"
+          },
+          "slots": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AvailabilitySlot"
+            }
+          }
+        },
+        "required": [
+          "date",
+          "slots"
+        ]
+      },
+      "PublicEventTypeResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "EventType UUID"
+          },
+          "title": {
+            "type": "string",
+            "description": "Event type title"
+          },
+          "description": {
+            "type": "string",
+            "description": "Event type description"
+          },
+          "duration": {
+            "type": "integer",
+            "description": "Duration in minutes"
+          },
+          "slug": {
+            "type": "string",
+            "description": "URL-friendly slug"
+          },
+          "bufferBefore": {
+            "type": "integer",
+            "description": "Buffer before event in minutes"
+          },
+          "bufferAfter": {
+            "type": "integer",
+            "description": "Buffer after event in minutes"
+          },
+          "timezone": {
+            "type": "string",
+            "description": "Schedule IANA timezone (e.g. Europe/Moscow)"
+          },
+          "ownerName": {
+            "type": "string",
+            "description": "Name of the event type owner"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "duration",
+          "slug",
+          "bufferBefore",
+          "bufferAfter",
+          "timezone"
+        ]
+      },
+      "BookingResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Booking UUID"
+          },
+          "eventTypeId": {
+            "type": "string",
+            "description": "EventType UUID"
+          },
+          "eventTitle": {
+            "type": "string",
+            "description": "EventType title at time of booking"
+          },
+          "guestName": {
+            "type": "string",
+            "description": "Guest full name"
+          },
+          "guestEmail": {
+            "type": "string",
+            "description": "Guest email address"
+          },
+          "notes": {
+            "type": "string",
+            "description": "Optional notes from the guest"
+          },
+          "startTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Booking start time (ISO 8601)"
+          },
+          "endTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Booking end time (ISO 8601)"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "CONFIRMED",
+              "CANCELLED"
+            ],
+            "description": "Booking status"
+          },
+          "cancelToken": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Token used by guests to cancel a booking via the email link"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation timestamp"
+          }
+        },
+        "required": [
+          "id",
+          "eventTypeId",
+          "eventTitle",
+          "guestName",
+          "guestEmail",
+          "startTime",
+          "endTime",
+          "status",
+          "cancelToken",
+          "createdAt"
+        ]
+      },
+      "CreateBookingRequest": {
+        "type": "object",
+        "properties": {
+          "eventTypeId": {
+            "type": "string",
+            "description": "EventType UUID to book"
+          },
+          "guestName": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Guest full name"
+          },
+          "guestEmail": {
+            "type": "string",
+            "format": "email",
+            "description": "Guest email address"
+          },
+          "notes": {
+            "type": "string",
+            "description": "Optional notes from the guest"
+          },
+          "startTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Selected slot start time (ISO 8601)"
+          },
+          "endTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Selected slot end time (ISO 8601)"
+          },
+          "timezone": {
+            "type": "string",
+            "description": "Guest IANA timezone (e.g. Europe/Moscow)"
+          }
+        },
+        "required": [
+          "eventTypeId",
+          "guestName",
+          "guestEmail",
+          "startTime",
+          "endTime"
+        ]
       }
     }
   }

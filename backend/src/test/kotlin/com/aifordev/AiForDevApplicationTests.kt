@@ -18,6 +18,7 @@ import org.springframework.test.context.TestPropertySource
         "app.oauth2.google.client-secret=test-client-secret",
         "app.oauth2.google.redirect-uri=http://localhost:8080/api/auth/oauth2/google/callback",
         "app.oauth2.google.frontend-url=http://localhost:3000",
+        "spring.mail.host=localhost",
     ],
 )
 class AiForDevApplicationTests {

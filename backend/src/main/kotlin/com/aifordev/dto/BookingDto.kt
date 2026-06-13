@@ -31,6 +31,7 @@ data class BookingResponse(
     val startTime: String,
     val endTime: String,
     val status: String,
+    val cancelToken: String,
     val createdAt: String,
 )
 

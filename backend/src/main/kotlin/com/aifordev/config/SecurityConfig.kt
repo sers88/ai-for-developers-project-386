@@ -36,10 +36,13 @@ class SecurityConfig(
                         "/api/auth/oauth2/google/callback",
                         "/api/calendar/google/callback",
                         "/api/public/**",
-                        "/api/bookings",
                         "/api/event-types/*/availability",
                         "/actuator/health",
                     ).permitAll()
+                    .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/bookings")
+                    .permitAll()
+                    .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/api/bookings/*")
+                    .permitAll()
                     .anyRequest()
                     .authenticated()
             }.addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter::class.java)

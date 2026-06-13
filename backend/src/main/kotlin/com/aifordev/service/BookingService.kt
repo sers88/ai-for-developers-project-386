@@ -17,6 +17,7 @@ class BookingService(
     private val bookingRepository: BookingRepository,
     private val googleCalendarService: GoogleCalendarService,
     private val availabilityService: AvailabilityService,
+    private val emailService: EmailService,
 ) {
     @Transactional
     fun createBooking(request: CreateBookingRequest): BookingResponse {
@@ -81,7 +82,88 @@ class BookingService(
             }
         }
 
+        emailService.sendBookingConfirmationToGuest(toEmailData(saved))
+        emailService.sendBookingNotificationToOrganizer(toEmailData(saved))
+
         return toResponse(saved)
+    }
+
+    @Transactional
+    fun listBookings(
+        userId: UUID,
+        status: String?,
+    ): List<BookingResponse> {
+        val now = Instant.now()
+        val bookings =
+            when (status) {
+                "past" -> bookingRepository.findPastByUserId(userId, now)
+                else -> bookingRepository.findUpcomingByUserId(userId, now)
+            }
+        return bookings.map { toResponse(it) }
+    }
+
+    @Transactional
+    fun cancelBooking(
+        bookingId: UUID,
+        requesterUserId: UUID?,
+        token: String?,
+    ): BookingResponse {
+        val booking =
+            bookingRepository
+                .findById(bookingId)
+                .orElseThrow { BookingNotFoundException("Booking not found") }
+
+        val isOwner = requesterUserId != null && booking.eventType.user.id == requesterUserId
+        val isGuestWithToken = token != null && token == booking.cancelToken.toString()
+
+        if (!isOwner && !isGuestWithToken) {
+            throw BookingAccessDeniedException("You are not authorized to cancel this booking")
+        }
+
+        if (booking.status == "CANCELLED") {
+            throw BookingAlreadyCancelledException("Booking is already cancelled")
+        }
+
+        booking.status = "CANCELLED"
+        bookingRepository.save(booking)
+
+        val userId = booking.eventType.user.id
+        if (userId != null) {
+            booking.googleEventId?.let { googleEventId ->
+                try {
+                    googleCalendarService.deleteEvent(userId, googleEventId)
+                } catch (e: Exception) {
+                    // Booking cancellation succeeds even if calendar event deletion fails
+                }
+            }
+        }
+
+        emailService.sendCancellationToGuest(toEmailData(booking))
+        emailService.sendCancellationToOrganizer(toEmailData(booking))
+
+        return toResponse(booking)
+    }
+
+    private fun toEmailData(booking: Booking): BookingEmailData {
+        val owner = booking.eventType.user
+        return BookingEmailData(
+            guestName = booking.guestName,
+            guestEmail = booking.guestEmail,
+            eventTitle = booking.eventType.title,
+            duration = booking.eventType.duration,
+            startTime = booking.startTime,
+            endTime = booking.endTime,
+            ownerEmail = owner.email,
+            ownerName = owner.name ?: owner.email,
+            cancelUrl =
+                emailService.buildCancelUrl(
+                    ownerId = owner.id!!,
+                    slug = booking.eventType.slug,
+                    cancelToken = booking.cancelToken,
+                    bookingId = booking.id!!,
+                ),
+            notes = booking.notes,
+        )
     }
 
     private fun toResponse(booking: Booking): BookingResponse =
@@ -95,6 +177,7 @@ class BookingService(
             startTime = booking.startTime.toString(),
             endTime = booking.endTime.toString(),
             status = booking.status,
+            cancelToken = booking.cancelToken.toString(),
             createdAt = booking.createdAt.atOffset(ZoneOffset.UTC).toString(),
         )
 }

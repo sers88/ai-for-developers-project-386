@@ -35,6 +35,8 @@ class Booking(
     var googleEventId: String? = null,
     @Column(nullable = false)
     var status: String = "CONFIRMED",
+    @Column(name = "cancel_token", nullable = false, unique = true)
+    val cancelToken: UUID = UUID.randomUUID(),
     @Column(name = "created_at", nullable = false, updatable = false)
     val createdAt: Instant = Instant.now(),
 )

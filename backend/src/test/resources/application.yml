@@ -5,6 +5,8 @@ spring.jpa.show-sql=false
 
 spring.flyway.enabled=false
 
+spring.mail.host=localhost
+
 app.jwt.secret=dGhpcy1pcy1hLXRlc3Qtc2VjcmV0LWtleS1mb3Itand0LXNpZ25pbmctaW4tdGVzdHM
 app.jwt.access-token-expiration-ms=900000
 app.jwt.refresh-token-expiration-ms=604800000
