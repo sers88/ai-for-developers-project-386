@@ -33,11 +33,11 @@ jobs:
       - name: Lint frontend code
         run: npm run lint
 
-      - name: Run unit tests
-        run: npm run test
-
       - name: Generate Nuxt types
         run: npx nuxt prepare
+
+      - name: Run unit tests
+        run: npm run test
 
       - name: Typecheck
         run: npm run typecheck
