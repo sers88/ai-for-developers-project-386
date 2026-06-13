@@ -8,7 +8,7 @@ const router = useRouter()
 const id = route.params.id as string
 const { getEventType, updateEventType, deleteEventType } = useEventTypes()
 const { load: loadSchedules, schedules, loading: schedulesLoading } = useSchedulesForSelect()
-const { errors, isSubmitting, generalError, handleSubmit, initFromEventType } = useEventTypeForm()
+const { errors, isSubmitting, generalError, handleSubmit, initFromEventType, title, description, duration, scheduleId, bufferBefore, bufferAfter } = useEventTypeForm()
 
 const loading = ref(true)
 const error = ref<string | null>(null)
@@ -128,24 +128,24 @@ const submit = handleSubmit(async (values) => {
       <form @submit.prevent="submit">
         <div class="field">
           <label for="title">Title</label>
-          <input id="title" name="title" type="text">
+          <input id="title" v-model="title" name="title" type="text">
           <p v-if="errors.title" class="field-error">{{ errors.title }}</p>
         </div>
 
         <div class="field">
           <label for="description">Description</label>
-          <input id="description" name="description" type="text">
+          <input id="description" v-model="description" name="description" type="text">
         </div>
 
         <div class="field">
           <label for="duration">Duration (minutes)</label>
-          <input id="duration" name="duration" type="number" min="5">
+          <input id="duration" v-model.number="duration" name="duration" type="number" min="5">
           <p v-if="errors.duration" class="field-error">{{ errors.duration }}</p>
         </div>
 
         <div class="field">
           <label for="scheduleId">Schedule</label>
-          <select id="scheduleId" name="scheduleId" :disabled="schedulesLoading">
+          <select id="scheduleId" v-model="scheduleId" name="scheduleId" :disabled="schedulesLoading">
             <option value="">None</option>
             <option v-for="s in schedules" :key="s.id" :value="s.id">
               {{ s.name }} ({{ s.timezone }})
@@ -156,12 +156,12 @@ const submit = handleSubmit(async (values) => {
         <div class="field-row">
           <div class="field">
             <label for="bufferBefore">Buffer Before (min)</label>
-            <input id="bufferBefore" name="bufferBefore" type="number" min="0">
+            <input id="bufferBefore" v-model.number="bufferBefore" name="bufferBefore" type="number" min="0">
             <p v-if="errors.bufferBefore" class="field-error">{{ errors.bufferBefore }}</p>
           </div>
           <div class="field">
             <label for="bufferAfter">Buffer After (min)</label>
-            <input id="bufferAfter" name="bufferAfter" type="number" min="0">
+            <input id="bufferAfter" v-model.number="bufferAfter" name="bufferAfter" type="number" min="0">
             <p v-if="errors.bufferAfter" class="field-error">{{ errors.bufferAfter }}</p>
           </div>
         </div>

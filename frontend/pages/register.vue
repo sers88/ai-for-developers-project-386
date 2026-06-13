@@ -3,7 +3,7 @@ definePageMeta({
   layout: false,
 })
 
- const { submit, errors, isSubmitting, generalError } = useRegisterForm()
+ const { submit, errors, isSubmitting, generalError, email, password } = useRegisterForm()
 const { redirectToGoogle } = useGoogleAuth()
 </script>
 
@@ -15,6 +15,7 @@ const { redirectToGoogle } = useGoogleAuth()
         <label for="email">Email</label>
         <input
           id="email"
+          v-model="email"
           name="email"
           type="email"
           placeholder="email@example.com"
@@ -25,6 +26,7 @@ const { redirectToGoogle } = useGoogleAuth()
         <label for="password">Password</label>
         <input
           id="password"
+          v-model="password"
           name="password"
           type="password"
           placeholder="Min. 6 characters"
