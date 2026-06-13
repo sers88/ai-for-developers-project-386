@@ -1,5 +1,30 @@
 paths:
   /api/bookings:
+    get:
+      tags: [bookings]
+      summary: List bookings for the authenticated user
+      description: "Returns the authenticated user's bookings, optionally filtered by upcoming or past."
+      operationId: listBookings
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [upcoming, past]
+            default: upcoming
+          description: "Filter bookings by upcoming (start time in the future) or past."
+      responses:
+        "200":
+          description: "List of bookings"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "../components/schemas/booking.yaml#/BookingResponse"
+        "401":
+          description: "Unauthorized"
     post:
       tags: [bookings]
       summary: Create a booking
@@ -45,3 +70,59 @@ paths:
                 slotTaken:
                   value:
                     message: "This time slot is already booked"
+
+  /api/bookings/{id}:
+    delete:
+      tags: [bookings]
+      summary: Cancel a booking
+      description: >
+        Cancels a booking. The authenticated owner of the event type may cancel
+        without a token. Guests cancel by providing the cancelToken issued in the
+        confirmation email. Cancelling also removes the associated Google Calendar
+        event and sends cancellation emails to both parties.
+      operationId: cancelBooking
+      security: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: "Booking UUID"
+        - name: token
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+          description: "Cancel token (required for unauthenticated guests)"
+      responses:
+        "200":
+          description: "Booking cancelled"
+          content:
+            application/json:
+              schema:
+                $ref: "../components/schemas/booking.yaml#/BookingResponse"
+        "401":
+          description: "Unauthorized — owner auth or valid cancel token required"
+          content:
+            application/json:
+              schema:
+                $ref: "../components/schemas/ErrorResponse.yaml"
+        "404":
+          description: "Booking not found"
+          content:
+            application/json:
+              schema:
+                $ref: "../components/schemas/ErrorResponse.yaml"
+        "409":
+          description: "Booking already cancelled"
+          content:
+            application/json:
+              schema:
+                $ref: "../components/schemas/ErrorResponse.yaml"
+              examples:
+                alreadyCancelled:
+                  value:
+                    message: "Booking is already cancelled"

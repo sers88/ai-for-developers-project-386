@@ -66,6 +66,10 @@ BookingResponse:
       type: string
       enum: [CONFIRMED, CANCELLED]
       description: "Booking status"
+    cancelToken:
+      type: string
+      format: uuid
+      description: "Token used by guests to cancel a booking via the email link"
     createdAt:
       type: string
       format: date-time
@@ -79,4 +83,5 @@ BookingResponse:
     - startTime
     - endTime
     - status
+    - cancelToken
     - createdAt

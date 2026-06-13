@@ -44,6 +44,7 @@ import kotlin.test.assertTrue
         "app.oauth2.google.calendar.redirect-uri=http://localhost:8080/api/calendar/google/callback",
         "app.oauth2.google.calendar.frontend-url=http://localhost:3000",
         "app.oauth2.google.calendar.encryption-key=test-encryption-key-min-32-bytes!!",
+        "spring.mail.host=localhost",
     ],
 )
 class GoogleCalendarIntegrationTest {

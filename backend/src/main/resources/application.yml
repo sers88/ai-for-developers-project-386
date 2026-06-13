@@ -25,3 +25,12 @@ app.oauth2.google.frontend-url=${FRONTEND_URL:http://localhost:3000}
 app.oauth2.google.calendar.redirect-uri=${GOOGLE_CALENDAR_REDIRECT_URI:http://localhost:8080/api/calendar/google/callback}
 app.oauth2.google.calendar.frontend-url=${FRONTEND_URL:http://localhost:3000}
 app.oauth2.google.calendar.encryption-key=${CALENDAR_ENCRYPTION_KEY:change-me-in-production}
+
+spring.mail.host=${SMTP_HOST:}
+spring.mail.port=${SMTP_PORT:587}
+spring.mail.username=${SMTP_USERNAME:}
+spring.mail.password=${SMTP_PASSWORD:}
+spring.mail.properties.mail.smtp.auth=${SMTP_AUTH:true}
+spring.mail.properties.mail.smtp.starttls.enable=${SMTP_STARTTLS:true}
+app.mail.from=${MAIL_FROM:noreply@aifordev.com}
+app.frontend-url=${FRONTEND_URL:http://localhost:3000}

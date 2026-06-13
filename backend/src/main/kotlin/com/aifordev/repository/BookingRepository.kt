@@ -22,4 +22,32 @@ interface BookingRepository : JpaRepository<Booking, UUID> {
         @Param("rangeStart") rangeStart: Instant,
         @Param("rangeEnd") rangeEnd: Instant,
     ): List<Booking>
+
+    fun findByCancelToken(cancelToken: UUID): Booking?
+
+    @Query(
+        """
+        SELECT b FROM Booking b
+        WHERE b.eventType.user.id = :userId
+          AND b.startTime >= :now
+        ORDER BY b.startTime ASC
+        """,
+    )
+    fun findUpcomingByUserId(
+        @Param("userId") userId: UUID,
+        @Param("now") now: Instant,
+    ): List<Booking>
+
+    @Query(
+        """
+        SELECT b FROM Booking b
+        WHERE b.eventType.user.id = :userId
+          AND b.startTime < :now
+        ORDER BY b.startTime DESC
+        """,
+    )
+    fun findPastByUserId(
+        @Param("userId") userId: UUID,
+        @Param("now") now: Instant,
+    ): List<Booking>
 }

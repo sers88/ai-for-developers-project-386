@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Booking Confirmed</title>
+</head>
+<body style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto;">
+    <h1 style="color: #2563eb;">Your booking is confirmed!</h1>
+    <p>Hi <span th:text="${guestName}">Guest</span>,</p>
+    <p>You're scheduled for:</p>
+    <table style="border-collapse: collapse; width: 100%; margin: 16px 0;">
+        <tr>
+            <td style="padding: 8px; border-bottom: 1px solid #eee; font-weight: bold;">Event</td>
+            <td style="padding: 8px; border-bottom: 1px solid #eee;" th:text="${eventTitle}">Event</td>
+        </tr>
+        <tr>
+            <td style="padding: 8px; border-bottom: 1px solid #eee; font-weight: bold;">When</td>
+            <td style="padding: 8px; border-bottom: 1px solid #eee;" th:text="${startTime}">Time</td>
+        </tr>
+        <tr>
+            <td style="padding: 8px; border-bottom: 1px solid #eee; font-weight: bold;">Duration</td>
+            <td style="padding: 8px; border-bottom: 1px solid #eee;">
+                <span th:text="${duration}">30</span> minutes
+            </td>
+        </tr>
+        <tr>
+            <td style="padding: 8px; font-weight: bold;">With</td>
+            <td style="padding: 8px;" th:text="${ownerName}">Organizer</td>
+        </tr>
+    </table>
+    <p>A calendar invitation has been sent to your email.</p>
+    <p style="margin-top: 24px;">
+        Need to cancel?
+        <a th:href="${cancelUrl}" style="color: #dc2626;">Cancel this booking</a>
+    </p>
+    <hr style="border: none; border-top: 1px solid #eee; margin: 24px 0;" />
+    <p style="font-size: 12px; color: #999;">This is an automated email. Please do not reply.</p>
+</body>
+</html>

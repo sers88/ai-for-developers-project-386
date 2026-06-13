@@ -60,6 +60,8 @@ paths:
     $ref: "./paths/public.yaml#/paths/~1api~1public~1{userId}~1{slug}"
   /api/bookings:
     $ref: "./paths/bookings.yaml#/paths/~1api~1bookings"
+  /api/bookings/{id}:
+    $ref: "./paths/bookings.yaml#/paths/~1api~1bookings~1{id}"
 components:
   securitySchemes:
     bearerAuth:
