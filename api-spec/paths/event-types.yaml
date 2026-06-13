@@ -1,0 +1,158 @@
+paths:
+  /api/event-types:
+    post:
+      tags: [eventTypes]
+      summary: Create a new event type
+      operationId: createEventType
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/event-type.yaml#/CreateEventTypeRequest"
+      responses:
+        "201":
+          description: "Event type created"
+          content:
+            application/json:
+              schema:
+                $ref: "../components/schemas/event-type.yaml#/EventTypeResponse"
+        "400":
+          description: "Validation error"
+          content:
+            application/json:
+              schema:
+                $ref: "../components/schemas/ErrorResponse.yaml"
+              examples:
+                validation:
+                  value:
+                    message: "title: Title is required"
+        "401":
+          description: "Unauthorized — missing or invalid JWT"
+        "409":
+          description: "Event type with this slug already exists for this user"
+          content:
+            application/json:
+              schema:
+                $ref: "../components/schemas/ErrorResponse.yaml"
+              examples:
+                duplicateSlug:
+                  value:
+                    message: "Event type with slug 'my-event' already exists"
+
+    get:
+      tags: [eventTypes]
+      summary: List event types for current user
+      operationId: listEventTypes
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: "List of user event types"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "../components/schemas/event-type.yaml#/EventTypeResponse"
+        "401":
+          description: "Unauthorized — missing or invalid JWT"
+
+  /api/event-types/{id}:
+    get:
+      tags: [eventTypes]
+      summary: Get event type by ID
+      operationId: getEventType
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: "Event type UUID"
+      responses:
+        "200":
+          description: "Event type details"
+          content:
+            application/json:
+              schema:
+                $ref: "../components/schemas/event-type.yaml#/EventTypeResponse"
+        "401":
+          description: "Unauthorized — missing or invalid JWT"
+        "404":
+          description: "Event type not found"
+          content:
+            application/json:
+              schema:
+                $ref: "../components/schemas/ErrorResponse.yaml"
+
+    put:
+      tags: [eventTypes]
+      summary: Update an event type
+      operationId: updateEventType
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: "Event type UUID"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/event-type.yaml#/UpdateEventTypeRequest"
+      responses:
+        "200":
+          description: "Event type updated"
+          content:
+            application/json:
+              schema:
+                $ref: "../components/schemas/event-type.yaml#/EventTypeResponse"
+        "400":
+          description: "Validation error"
+          content:
+            application/json:
+              schema:
+                $ref: "../components/schemas/ErrorResponse.yaml"
+        "401":
+          description: "Unauthorized — missing or invalid JWT"
+        "404":
+          description: "Event type not found"
+          content:
+            application/json:
+              schema:
+                $ref: "../components/schemas/ErrorResponse.yaml"
+        "409":
+          description: "Event type with this slug already exists for this user"
+          content:
+            application/json:
+              schema:
+                $ref: "../components/schemas/ErrorResponse.yaml"
+
+    delete:
+      tags: [eventTypes]
+      summary: Delete an event type
+      operationId: deleteEventType
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: "Event type UUID"
+      responses:
+        "204":
+          description: "Event type deleted"
+        "401":
+          description: "Unauthorized — missing or invalid JWT"
+        "404":
+          description: "Event type not found"
+          content:
+            application/json:
+              schema:
+                $ref: "../components/schemas/ErrorResponse.yaml"

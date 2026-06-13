@@ -1,0 +1,105 @@
+EventTypeResponse:
+  type: object
+  properties:
+    id:
+      type: string
+      description: "EventType UUID"
+    userId:
+      type: string
+      description: "Owner user UUID"
+    title:
+      type: string
+      description: "Event type title"
+    description:
+      type: string
+      description: "Event type description"
+    slug:
+      type: string
+      description: "URL-friendly slug generated from title"
+    duration:
+      type: integer
+      description: "Duration in minutes"
+    scheduleId:
+      type: string
+      description: "Associated schedule UUID"
+    scheduleName:
+      type: string
+      description: "Associated schedule name"
+    bufferBefore:
+      type: integer
+      description: "Buffer before event in minutes"
+    bufferAfter:
+      type: integer
+      description: "Buffer after event in minutes"
+    bookingUrl:
+      type: string
+      description: "Public booking link for this event type"
+    createdAt:
+      type: string
+      format: date-time
+      description: "Creation timestamp"
+  required:
+    - id
+    - userId
+    - title
+    - slug
+    - duration
+    - bufferBefore
+    - bufferAfter
+    - bookingUrl
+    - createdAt
+
+CreateEventTypeRequest:
+  type: object
+  properties:
+    title:
+      type: string
+      minLength: 1
+      description: "Event type title"
+    description:
+      type: string
+      description: "Event type description"
+    duration:
+      type: integer
+      minimum: 5
+      description: "Duration in minutes (min 5)"
+    scheduleId:
+      type: string
+      description: "Associated schedule UUID"
+    bufferBefore:
+      type: integer
+      minimum: 0
+      description: "Buffer before event in minutes"
+    bufferAfter:
+      type: integer
+      minimum: 0
+      description: "Buffer after event in minutes"
+  required:
+    - title
+    - duration
+
+UpdateEventTypeRequest:
+  type: object
+  properties:
+    title:
+      type: string
+      minLength: 1
+      description: "Event type title"
+    description:
+      type: string
+      description: "Event type description"
+    duration:
+      type: integer
+      minimum: 5
+      description: "Duration in minutes (min 5)"
+    scheduleId:
+      type: string
+      description: "Associated schedule UUID (empty string to unlink)"
+    bufferBefore:
+      type: integer
+      minimum: 0
+      description: "Buffer before event in minutes"
+    bufferAfter:
+      type: integer
+      minimum: 0
+      description: "Buffer after event in minutes"
