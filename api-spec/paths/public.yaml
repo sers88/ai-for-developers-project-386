@@ -1,0 +1,34 @@
+paths:
+  /api/public/{userId}/{slug}:
+    get:
+      tags: [public]
+      summary: Get public event type info
+      description: "Returns event type details for the public booking page (no authentication required)"
+      operationId: getPublicEventType
+      security: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: "Owner user UUID"
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+          description: "Event type slug"
+      responses:
+        "200":
+          description: "Public event type details"
+          content:
+            application/json:
+              schema:
+                $ref: "../components/schemas/public-event-type.yaml#/PublicEventTypeResponse"
+        "404":
+          description: "Event type not found"
+          content:
+            application/json:
+              schema:
+                $ref: "../components/schemas/ErrorResponse.yaml"

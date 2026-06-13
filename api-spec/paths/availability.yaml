@@ -1,0 +1,35 @@
+paths:
+  /api/event-types/{id}/availability:
+    get:
+      tags: [eventTypes]
+      summary: Get available time slots for a date
+      description: "Returns available booking slots for the given date, accounting for schedule availability, Google Calendar busy slots, existing bookings, and buffers"
+      operationId: getAvailability
+      security: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: "Event type UUID"
+        - name: date
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+          description: "Date to check (YYYY-MM-DD)"
+      responses:
+        "200":
+          description: "Available time slots"
+          content:
+            application/json:
+              schema:
+                $ref: "../components/schemas/availability-slot.yaml#/AvailabilitySlotsResponse"
+        "404":
+          description: "Event type not found"
+          content:
+            application/json:
+              schema:
+                $ref: "../components/schemas/ErrorResponse.yaml"

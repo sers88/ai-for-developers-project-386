@@ -1,0 +1,38 @@
+PublicEventTypeResponse:
+  type: object
+  properties:
+    id:
+      type: string
+      description: "EventType UUID"
+    title:
+      type: string
+      description: "Event type title"
+    description:
+      type: string
+      description: "Event type description"
+    duration:
+      type: integer
+      description: "Duration in minutes"
+    slug:
+      type: string
+      description: "URL-friendly slug"
+    bufferBefore:
+      type: integer
+      description: "Buffer before event in minutes"
+    bufferAfter:
+      type: integer
+      description: "Buffer after event in minutes"
+    timezone:
+      type: string
+      description: "Schedule IANA timezone (e.g. Europe/Moscow)"
+    ownerName:
+      type: string
+      description: "Name of the event type owner"
+  required:
+    - id
+    - title
+    - duration
+    - slug
+    - bufferBefore
+    - bufferAfter
+    - timezone
