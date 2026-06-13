@@ -21,7 +21,15 @@ gh issue view {N} --repo sers88/ai-for-developers-project-386 --json title,body,
 git checkout main && git pull origin main && git checkout -b {label-lower}-{N}-{short-slug}
 ```
 
-Naming: `df-1-foundation`, `df-2-retro-doc`, `df-3-ts-client`. Use the issue label in lowercase.
+**Naming rule**: extract the issue labels via `gh issue view {N} --json labels`. Use the **primary feature label** in lowercase as the prefix. Skip workflow labels (`ready-for-agent`, `triaged`, `in-progress`, etc.) — pick the label that describes the feature domain.
+
+Examples:
+- Label `design-first` → `design-first-23-schedules-spec`
+- Label `feature` → `feature-google-oauth`
+- Label `bug` → `bug-42-fix-login-redirect`
+- If only workflow labels exist, derive prefix from the issue title or parent PRD tag.
+
+Branch template: `{feature-label-lowercase}-{issue-number}-{short-slug}`
 
 ### 3. Explore
 
