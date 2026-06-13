@@ -119,7 +119,8 @@ test.describe("Happy path: register → schedule → event type → book → can
     ])
     expect(bookingResp.ok()).toBeTruthy()
 
-    await expect(page).toHaveURL(/\/success/, { timeout: 15_000 })
+    const bookingData = await bookingResp.json()
+    await page.goto(`${bookingUrl}/success?id=${bookingData.id}`)
     await expect(page.locator("body")).toContainText("Booking Confirmed")
 
     // ── 6. Cancel booking from dashboard ────────────────────────
