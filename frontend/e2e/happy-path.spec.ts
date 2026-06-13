@@ -33,8 +33,6 @@ test.describe("Happy path: register → schedule → event type → book → can
     test.setTimeout(120_000)
 
     page.on("dialog", (dialog) => dialog.accept())
-    page.on("console", (msg) => console.log(`BROWSER [${msg.type()}]:`, msg.text()))
-    page.on("pageerror", (err) => console.log("BROWSER ERROR:", err.message))
 
     const email = uniqueEmail()
 
@@ -52,11 +50,18 @@ test.describe("Happy path: register → schedule → event type → book → can
     await expect(page.locator("h1")).toHaveText("Schedule Settings")
     await expect(page.locator(".day-row").first()).toBeVisible({ timeout: 10_000 })
 
-    await page.locator(".btn-save").click()
-    await expect(page.locator(".btn-save")).toContainText("Save", { timeout: 10_000 })
+    await Promise.all([
+      page.waitForResponse(
+        (resp) => resp.url().includes("/api/schedules") && resp.request().method() === "PUT",
+        { timeout: 15_000 },
+      ),
+      page.locator(".btn-save").click(),
+    ])
 
     // ── 3. Create event type ────────────────────────────────────
-    await page.goto("/event-types/create")
+    await page.goto("/event-types")
+    await expect(page.locator("h1")).toHaveText("Event Types")
+    await page.locator(".btn-create").click()
     await expect(page.locator("h1")).toHaveText("New Event Type")
 
     await page.locator("#title").fill("E2E Consultation")
