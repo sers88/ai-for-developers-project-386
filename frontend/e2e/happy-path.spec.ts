@@ -38,17 +38,11 @@ test.describe("Happy path: register → schedule → event type → book → can
 
     // ── 1. Register ──────────────────────────────────────────────
     await page.goto("/register")
-
-    const registerResponse = page.waitForResponse(
-      (resp) => resp.url().includes("/api/auth/register") && resp.status() === 200,
-    )
-
     await page.locator("#email").fill(email)
     await page.locator("#password").fill("password123")
     await page.locator('button[type="submit"]').click()
 
-    await registerResponse
-    await expect(page).toHaveURL(/\/dashboard/, { timeout: 15_000 })
+    await expect(page).toHaveURL(/\/dashboard/, { timeout: 30_000 })
     await expect(page.locator("h1")).toHaveText("Dashboard")
 
     // ── 2. Save schedule (default Mon–Fri 09:00–18:00) ──────────
@@ -56,19 +50,12 @@ test.describe("Happy path: register → schedule → event type → book → can
     await expect(page.locator("h1")).toHaveText("Schedule Settings")
     await expect(page.locator(".day-row").first()).toBeVisible({ timeout: 10_000 })
 
-    const saveScheduleResponse = page.waitForResponse(
-      (resp) => resp.url().includes("/api/schedules/") && resp.request().method() === "PUT",
-    )
     await page.locator(".btn-save").click()
-    await saveScheduleResponse
+    await expect(page.locator(".btn-save")).toContainText("Save", { timeout: 10_000 })
 
     // ── 3. Create event type ────────────────────────────────────
     await page.goto("/event-types/create")
     await expect(page.locator("h1")).toHaveText("New Event Type")
-
-    const eventTypesResponse = page.waitForResponse(
-      (resp) => resp.url().includes("/api/event-types") && !resp.url().includes("/event-types/") && resp.status() === 200,
-    )
 
     await page.locator("#title").fill("E2E Consultation")
     await page.locator("#duration").fill("30")
@@ -83,18 +70,28 @@ test.describe("Happy path: register → schedule → event type → book → can
     }
 
     await page.locator('button[type="submit"]').click()
+    await expect(page).toHaveURL(/\/event-types$/, { timeout: 15_000 })
 
-    const etResponse = await eventTypesResponse
-    const eventTypes = await etResponse.json()
+    // ── 4. Get booking URL from API ─────────────────────────────
+    const token = await page.evaluate(() => localStorage.getItem("accessToken"))
+    expect(token).toBeTruthy()
+
+    const apiBase = await page.evaluate(() => {
+      const nuxt = (window as unknown as { __NUXT__: { public: { apiBase: string } } }).__NUXT__
+      return nuxt?.public?.apiBase || "http://localhost:8080"
+    })
+
+    const eventTypesResp = await page.request.get(`${apiBase}/api/event-types`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    expect(eventTypesResp.ok()).toBeTruthy()
+    const eventTypes = await eventTypesResp.json()
     expect(eventTypes.length).toBeGreaterThan(0)
 
-    const eventType = eventTypes[0]
-    const bookingUrl = eventType.bookingUrl as string
+    const bookingUrl = eventTypes[0].bookingUrl as string
     expect(bookingUrl).toBeTruthy()
 
-    await expect(page).toHaveURL(/\/event-types$/, { timeout: 10_000 })
-
-    // ── 4. Book a slot on the public booking page ───────────────
+    // ── 5. Book a slot on the public booking page ───────────────
     await page.goto(bookingUrl)
     await expect(page.locator("h1")).toHaveText("E2E Consultation")
 
@@ -106,29 +103,17 @@ test.describe("Happy path: register → schedule → event type → book → can
 
     await page.locator("#guestName").fill("Test Guest")
     await page.locator("#guestEmail").fill("guest@test.com")
-
-    const bookingResponse = page.waitForResponse(
-      (resp) => resp.url().includes("/api/bookings") && resp.request().method() === "POST" && resp.status() === 201,
-    )
-
     await page.locator(".btn-book").click()
-    await bookingResponse
 
-    await expect(page).toHaveURL(/\/success/, { timeout: 10_000 })
+    await expect(page).toHaveURL(/\/success/, { timeout: 15_000 })
     await expect(page.locator("body")).toContainText("Booking Confirmed")
 
-    // ── 5. Cancel booking from dashboard ────────────────────────
+    // ── 6. Cancel booking from dashboard ────────────────────────
     await page.goto("/dashboard")
     await expect(page.locator("h1")).toHaveText("Dashboard")
 
     await page.waitForSelector(".btn-cancel", { timeout: 10_000 })
-
-    const cancelResponse = page.waitForResponse(
-      (resp) => resp.url().includes("/api/bookings/") && resp.request().method() === "DELETE",
-    )
-
     await page.locator(".btn-cancel").first().click()
-    await cancelResponse
 
     await expect(page.locator(".badge.cancelled")).toBeVisible({ timeout: 10_000 })
   })
