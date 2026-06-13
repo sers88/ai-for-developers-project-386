@@ -109,7 +109,15 @@ test.describe("Happy path: register → schedule → event type → book → can
 
     await page.locator("#guestName").fill("Test Guest")
     await page.locator("#guestEmail").fill("guest@test.com")
-    await page.locator(".btn-book").click()
+
+    const [bookingResp] = await Promise.all([
+      page.waitForResponse(
+        (resp) => resp.url().includes("/api/bookings") && resp.request().method() === "POST",
+        { timeout: 15_000 },
+      ),
+      page.locator(".btn-book").click(),
+    ])
+    expect(bookingResp.ok()).toBeTruthy()
 
     await expect(page).toHaveURL(/\/success/, { timeout: 15_000 })
     await expect(page.locator("body")).toContainText("Booking Confirmed")
