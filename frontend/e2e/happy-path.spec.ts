@@ -59,9 +59,7 @@ test.describe("Happy path: register → schedule → event type → book → can
     ])
 
     // ── 3. Create event type ────────────────────────────────────
-    await page.goto("/event-types")
-    await expect(page.locator("h1")).toHaveText("Event Types")
-    await page.locator(".btn-create").click()
+    await page.goto("/event-types/create")
     await expect(page.locator("h1")).toHaveText("New Event Type")
 
     await page.locator("#title").fill("E2E Consultation")
