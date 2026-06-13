@@ -63,16 +63,48 @@ npm run build                    # production build
 
 ## Design First (OpenAPI)
 
-- **Spec directory**: `api-spec/` in repo root — single source of truth for API contracts.
-- **Config**: `api-spec/redocly.yaml` extends `recommended` with `info-license`, `operation-4xx-response`, `no-server-example.com` off.
-- **Workflow**:
-  ```sh
-  npm run spec:lint      # Validate OpenAPI spec with Redocly
-  npm run spec:bundle    # Bundle multi-file spec → api-spec/dist/openapi.json
-  npm run generate:api   # Generate TypeScript types → frontend/api/generated/schema.d.ts
-  ```
-- **Full chain after editing spec**: `npm run spec:lint && npm run spec:bundle && npm run generate:api`
-- **Generated files committed**: `api-spec/dist/openapi.json` and `frontend/api/generated/schema.d.ts` are committed to git for CI stability.
+### Workflow
+
+Process for new features — **spec first, code second**:
+
+1. **Spec first** — write/update OpenAPI spec in `api-spec/paths/<resource>.yaml` before writing any code. Add reusable schemas to `api-spec/components/schemas/`.
+2. **Lint and Bundle** — `npm run spec:lint && npm run spec:bundle` validates the spec with Redocly and bundles multi-file spec into a single `api-spec/dist/openapi.json`.
+3. **Generate client** — `npm run generate:api` generates TypeScript types from the bundled spec into `frontend/api/generated/schema.d.ts`.
+4. **Backend** — implement controllers matching the spec. Add contract tests to verify the implementation conforms to the OpenAPI spec.
+5. **Frontend** — use the typed `apiClient` from `frontend/api/client.ts` instead of raw `$fetch()`. The generated types ensure type safety across API calls.
+6. **CI** — all steps run in CI pipeline; PRs with spec/code mismatch are rejected.
+
+**Full chain after editing spec**: `npm run spec:lint && npm run spec:bundle && npm run generate:api`
+
+### API Spec Structure
+
+```
+api-spec/
+├── openapi.yaml          # Info, servers, security, tags
+├── paths/*.yaml          # One file per resource
+├── components/schemas/   # Reusable schemas
+├── dist/openapi.json     # Generated bundle (committed for CI stability)
+├── redocly.yaml          # Linter config
+└── codegen/              # Generator config
+```
+
+### Config
+
+`api-spec/redocly.yaml` extends `recommended` with `info-license`, `operation-4xx-response`, `no-server-example.com` off.
+
+### Scripts
+
+All scripts run from `frontend/`:
+
+| Script | Command | Description |
+|--------|---------|-------------|
+| Lint | `npm run spec:lint` | Validate OpenAPI spec with Redocly |
+| Bundle | `npm run spec:bundle` | Bundle multi-file spec → `api-spec/dist/openapi.json` |
+| Generate | `npm run generate:api` | Generate TypeScript types → `frontend/api/generated/schema.d.ts` |
+
+### Generated files
+
+`api-spec/dist/openapi.json` and `frontend/api/generated/schema.d.ts` are committed to git for CI stability.
 
 ## Auto-imports (Nuxt)
 - `composables/use*.ts` → available without import in `.vue` files
