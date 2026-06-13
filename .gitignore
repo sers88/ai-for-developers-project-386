@@ -2,3 +2,6 @@
 .idea/
 *.iml
 opencode.json
+node_modules
+/frontend/playwright-report/
+/frontend/test-results/
