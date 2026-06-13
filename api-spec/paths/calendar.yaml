@@ -1,0 +1,163 @@
+paths:
+  /api/calendar/google/connect:
+    get:
+      tags:
+        - calendar
+      summary: Initiate Google Calendar OAuth2 flow
+      operationId: connectGoogleCalendar
+      security: []
+      responses:
+        "302":
+          description: Redirect to Google Calendar OAuth consent screen
+
+  /api/calendar/google/callback:
+    get:
+      tags:
+        - calendar
+      summary: Google Calendar OAuth2 callback
+      operationId: googleCalendarCallback
+      security: []
+      parameters:
+        - name: code
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Authorization code from Google
+      responses:
+        "302":
+          description: Redirect to frontend with status
+
+  /api/calendar/google/status:
+    get:
+      tags:
+        - calendar
+      summary: Get Google Calendar connection status
+      operationId: getCalendarConnectionStatus
+      responses:
+        "200":
+          description: Connection status
+          content:
+            application/json:
+              schema:
+                $ref: "../components/schemas/CalendarConnectionStatusResponse.yaml"
+        "401":
+          description: Unauthorized — missing or invalid JWT
+
+  /api/calendar/google/events:
+    get:
+      tags:
+        - calendar
+      summary: Get busy slots from Google Calendar
+      operationId: getCalendarBusySlots
+      parameters:
+        - name: timeMin
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+          description: Start of the time period
+        - name: timeMax
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+          description: End of the time period
+      responses:
+        "200":
+          description: List of busy time slots
+          content:
+            application/json:
+              schema:
+                $ref: "../components/schemas/CalendarBusySlotsResponse.yaml"
+        "400":
+          description: Calendar not connected or invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: "../components/schemas/ErrorResponse.yaml"
+              examples:
+                notConnected:
+                  summary: Calendar not connected
+                  value:
+                    message: "Google Calendar is not connected"
+                invalidParams:
+                  summary: Invalid query parameters
+                  value:
+                    message: "timeMin and timeMax are required"
+        "401":
+          description: Unauthorized — missing or invalid JWT
+    post:
+      tags:
+        - calendar
+      summary: Create an event in Google Calendar
+      operationId: createCalendarEvent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/CreateCalendarEventRequest.yaml"
+      responses:
+        "201":
+          description: Event created
+          content:
+            application/json:
+              schema:
+                $ref: "../components/schemas/CalendarEventResponse.yaml"
+        "400":
+          description: Calendar not connected or validation error
+          content:
+            application/json:
+              schema:
+                $ref: "../components/schemas/ErrorResponse.yaml"
+              examples:
+                notConnected:
+                  summary: Calendar not connected
+                  value:
+                    message: "Google Calendar is not connected"
+        "401":
+          description: Unauthorized — missing or invalid JWT
+
+  /api/calendar/google/events/{googleEventId}:
+    delete:
+      tags:
+        - calendar
+      summary: Delete an event from Google Calendar
+      operationId: deleteCalendarEvent
+      parameters:
+        - name: googleEventId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Google Calendar event ID
+      responses:
+        "204":
+          description: Event deleted successfully
+        "400":
+          description: Calendar not connected
+          content:
+            application/json:
+              schema:
+                $ref: "../components/schemas/ErrorResponse.yaml"
+              examples:
+                notConnected:
+                  summary: Calendar not connected
+                  value:
+                    message: "Google Calendar is not connected"
+        "401":
+          description: Unauthorized — missing or invalid JWT
+        "404":
+          description: Event not found
+          content:
+            application/json:
+              schema:
+                $ref: "../components/schemas/ErrorResponse.yaml"
+              examples:
+                notFound:
+                  summary: Event not found
+                  value:
+                    message: "Event not found"

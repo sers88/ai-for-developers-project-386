@@ -15,6 +15,8 @@ tags:
     description: "User profile"
   - name: schedules
     description: "Schedule & availability management"
+  - name: calendar
+    description: "Google Calendar integration"
 paths:
   /api/auth/register:
     $ref: "./paths/auth.yaml#/paths/~1api~1auth~1register"
@@ -32,6 +34,16 @@ paths:
     $ref: "./paths/schedules.yaml#/paths/~1api~1schedules"
   /api/schedules/{id}:
     $ref: "./paths/schedules.yaml#/paths/~1api~1schedules~1{id}"
+  /api/calendar/google/connect:
+    $ref: "./paths/calendar.yaml#/paths/~1api~1calendar~1google~1connect"
+  /api/calendar/google/callback:
+    $ref: "./paths/calendar.yaml#/paths/~1api~1calendar~1google~1callback"
+  /api/calendar/google/status:
+    $ref: "./paths/calendar.yaml#/paths/~1api~1calendar~1google~1status"
+  /api/calendar/google/events:
+    $ref: "./paths/calendar.yaml#/paths/~1api~1calendar~1google~1events"
+  /api/calendar/google/events/{googleEventId}:
+    $ref: "./paths/calendar.yaml#/paths/~1api~1calendar~1google~1events~1{googleEventId}"
 components:
   securitySchemes:
     bearerAuth:

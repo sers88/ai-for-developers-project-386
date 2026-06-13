@@ -142,6 +142,92 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/calendar/google/connect": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Initiate Google Calendar OAuth2 flow */
+        get: operations["connectGoogleCalendar"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/calendar/google/callback": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Google Calendar OAuth2 callback */
+        get: operations["googleCalendarCallback"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/calendar/google/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Google Calendar connection status */
+        get: operations["getCalendarConnectionStatus"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/calendar/google/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get busy slots from Google Calendar */
+        get: operations["getCalendarBusySlots"];
+        put?: never;
+        /** Create an event in Google Calendar */
+        post: operations["createCalendarEvent"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/calendar/google/events/{googleEventId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete an event from Google Calendar */
+        delete: operations["deleteCalendarEvent"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -252,6 +338,65 @@ export interface components {
                 /** @description End time in HH:MM format (24h) */
                 endTime: string;
             }[];
+        };
+        CalendarConnectionStatusResponse: {
+            /** @description Whether Google Calendar is connected */
+            connected: boolean;
+            /**
+             * Format: email
+             * @description Google Calendar email address
+             */
+            email?: string;
+        };
+        CalendarBusySlot: {
+            /**
+             * Format: date-time
+             * @description Start of the busy slot
+             */
+            start: string;
+            /**
+             * Format: date-time
+             * @description End of the busy slot
+             */
+            end: string;
+        };
+        CalendarBusySlotsResponse: {
+            /** @description List of busy time slots */
+            busy: components["schemas"]["CalendarBusySlot"][];
+        };
+        CreateCalendarEventRequest: {
+            /** @description Event title/summary */
+            summary: string;
+            /** @description Event description */
+            description?: string;
+            /**
+             * Format: date-time
+             * @description Event start time
+             */
+            start: string;
+            /**
+             * Format: date-time
+             * @description Event end time
+             */
+            end: string;
+        };
+        CalendarEventResponse: {
+            /** @description Google Calendar event ID */
+            googleEventId: string;
+            /** @description Event title/summary */
+            summary: string;
+            /** @description Event description */
+            description?: string;
+            /**
+             * Format: date-time
+             * @description Event start time
+             */
+            start: string;
+            /**
+             * Format: date-time
+             * @description Event end time
+             */
+            end: string;
         };
     };
     responses: never;
@@ -575,6 +720,199 @@ export interface operations {
                 content?: never;
             };
             /** @description Schedule not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    connectGoogleCalendar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Redirect to Google Calendar OAuth consent screen */
+            302: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    googleCalendarCallback: {
+        parameters: {
+            query: {
+                /** @description Authorization code from Google */
+                code: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Redirect to frontend with status */
+            302: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    getCalendarConnectionStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Connection status */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CalendarConnectionStatusResponse"];
+                };
+            };
+            /** @description Unauthorized — missing or invalid JWT */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    getCalendarBusySlots: {
+        parameters: {
+            query: {
+                /** @description Start of the time period */
+                timeMin: string;
+                /** @description End of the time period */
+                timeMax: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description List of busy time slots */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CalendarBusySlotsResponse"];
+                };
+            };
+            /** @description Calendar not connected or invalid parameters */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized — missing or invalid JWT */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    createCalendarEvent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateCalendarEventRequest"];
+            };
+        };
+        responses: {
+            /** @description Event created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CalendarEventResponse"];
+                };
+            };
+            /** @description Calendar not connected or validation error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized — missing or invalid JWT */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    deleteCalendarEvent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Google Calendar event ID */
+                googleEventId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Event deleted successfully */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Calendar not connected */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized — missing or invalid JWT */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Event not found */
             404: {
                 headers: {
                     [name: string]: unknown;

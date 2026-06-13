@@ -1,0 +1,9 @@
+type: object
+properties:
+  busy:
+    type: array
+    description: List of busy time slots
+    items:
+      $ref: "./CalendarBusySlot.yaml"
+required:
+  - busy
