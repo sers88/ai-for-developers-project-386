@@ -1,0 +1,29 @@
+AvailabilitySlot:
+  type: object
+  properties:
+    start:
+      type: string
+      format: date-time
+      description: "Slot start time (ISO 8601)"
+    end:
+      type: string
+      format: date-time
+      description: "Slot end time (ISO 8601)"
+  required:
+    - start
+    - end
+
+AvailabilitySlotsResponse:
+  type: object
+  properties:
+    date:
+      type: string
+      format: date
+      description: "The date for which slots are returned (YYYY-MM-DD)"
+    slots:
+      type: array
+      items:
+        $ref: "#/AvailabilitySlot"
+  required:
+    - date
+    - slots

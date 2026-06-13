@@ -35,6 +35,9 @@ class SecurityConfig(
                         "/api/auth/oauth2/google",
                         "/api/auth/oauth2/google/callback",
                         "/api/calendar/google/callback",
+                        "/api/public/**",
+                        "/api/bookings",
+                        "/api/event-types/*/availability",
                         "/actuator/health",
                     ).permitAll()
                     .anyRequest()

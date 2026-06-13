@@ -1,0 +1,82 @@
+CreateBookingRequest:
+  type: object
+  properties:
+    eventTypeId:
+      type: string
+      description: "EventType UUID to book"
+    guestName:
+      type: string
+      minLength: 1
+      description: "Guest full name"
+    guestEmail:
+      type: string
+      format: email
+      description: "Guest email address"
+    notes:
+      type: string
+      description: "Optional notes from the guest"
+    startTime:
+      type: string
+      format: date-time
+      description: "Selected slot start time (ISO 8601)"
+    endTime:
+      type: string
+      format: date-time
+      description: "Selected slot end time (ISO 8601)"
+    timezone:
+      type: string
+      description: "Guest IANA timezone (e.g. Europe/Moscow)"
+  required:
+    - eventTypeId
+    - guestName
+    - guestEmail
+    - startTime
+    - endTime
+
+BookingResponse:
+  type: object
+  properties:
+    id:
+      type: string
+      description: "Booking UUID"
+    eventTypeId:
+      type: string
+      description: "EventType UUID"
+    eventTitle:
+      type: string
+      description: "EventType title at time of booking"
+    guestName:
+      type: string
+      description: "Guest full name"
+    guestEmail:
+      type: string
+      description: "Guest email address"
+    notes:
+      type: string
+      description: "Optional notes from the guest"
+    startTime:
+      type: string
+      format: date-time
+      description: "Booking start time (ISO 8601)"
+    endTime:
+      type: string
+      format: date-time
+      description: "Booking end time (ISO 8601)"
+    status:
+      type: string
+      enum: [CONFIRMED, CANCELLED]
+      description: "Booking status"
+    createdAt:
+      type: string
+      format: date-time
+      description: "Creation timestamp"
+  required:
+    - id
+    - eventTypeId
+    - eventTitle
+    - guestName
+    - guestEmail
+    - startTime
+    - endTime
+    - status
+    - createdAt

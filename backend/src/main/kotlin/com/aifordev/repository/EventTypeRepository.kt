@@ -23,4 +23,9 @@ interface EventTypeRepository : JpaRepository<EventType, UUID> {
         slug: String,
         id: UUID,
     ): Boolean
+
+    fun findByUserIdAndSlug(
+        userId: UUID,
+        slug: String,
+    ): EventType?
 }

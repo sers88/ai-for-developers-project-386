@@ -182,7 +182,7 @@ class EventTypeService(
             scheduleName = eventType.schedule?.name,
             bufferBefore = eventType.bufferBefore,
             bufferAfter = eventType.bufferAfter,
-            bookingUrl = "/book/${eventType.user.id}/${eventType.slug}",
+            bookingUrl = "/${eventType.user.id}/${eventType.slug}",
             createdAt = eventType.createdAt.atOffset(ZoneOffset.UTC).toString(),
         )
 }

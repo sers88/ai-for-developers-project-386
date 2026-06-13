@@ -19,6 +19,10 @@ tags:
     description: "Google Calendar integration"
   - name: eventTypes
     description: "Event type management"
+  - name: bookings
+    description: "Booking management"
+  - name: public
+    description: "Public endpoints (no auth)"
 paths:
   /api/auth/register:
     $ref: "./paths/auth.yaml#/paths/~1api~1auth~1register"
@@ -50,6 +54,12 @@ paths:
     $ref: "./paths/event-types.yaml#/paths/~1api~1event-types"
   /api/event-types/{id}:
     $ref: "./paths/event-types.yaml#/paths/~1api~1event-types~1{id}"
+  /api/event-types/{id}/availability:
+    $ref: "./paths/availability.yaml#/paths/~1api~1event-types~1{id}~1availability"
+  /api/public/{userId}/{slug}:
+    $ref: "./paths/public.yaml#/paths/~1api~1public~1{userId}~1{slug}"
+  /api/bookings:
+    $ref: "./paths/bookings.yaml#/paths/~1api~1bookings"
 components:
   securitySchemes:
     bearerAuth:

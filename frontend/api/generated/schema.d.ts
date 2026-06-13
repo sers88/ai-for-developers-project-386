@@ -265,6 +265,66 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/event-types/{id}/availability": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get available time slots for a date
+         * @description Returns available booking slots for the given date, accounting for schedule availability, Google Calendar busy slots, existing bookings, and buffers
+         */
+        get: operations["getAvailability"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/public/{userId}/{slug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get public event type info
+         * @description Returns event type details for the public booking page (no authentication required)
+         */
+        get: operations["getPublicEventType"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/bookings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create a booking
+         * @description Creates a new booking for a public event type (no authentication required)
+         */
+        post: operations["createBooking"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -491,6 +551,105 @@ export interface components {
             bufferBefore?: number;
             /** @description Buffer after event in minutes */
             bufferAfter?: number;
+        };
+        AvailabilitySlot: {
+            /**
+             * Format: date-time
+             * @description Slot start time (ISO 8601)
+             */
+            start: string;
+            /**
+             * Format: date-time
+             * @description Slot end time (ISO 8601)
+             */
+            end: string;
+        };
+        AvailabilitySlotsResponse: {
+            /**
+             * Format: date
+             * @description The date for which slots are returned (YYYY-MM-DD)
+             */
+            date: string;
+            slots: components["schemas"]["AvailabilitySlot"][];
+        };
+        PublicEventTypeResponse: {
+            /** @description EventType UUID */
+            id: string;
+            /** @description Event type title */
+            title: string;
+            /** @description Event type description */
+            description?: string;
+            /** @description Duration in minutes */
+            duration: number;
+            /** @description URL-friendly slug */
+            slug: string;
+            /** @description Buffer before event in minutes */
+            bufferBefore: number;
+            /** @description Buffer after event in minutes */
+            bufferAfter: number;
+            /** @description Schedule IANA timezone (e.g. Europe/Moscow) */
+            timezone: string;
+            /** @description Name of the event type owner */
+            ownerName?: string;
+        };
+        CreateBookingRequest: {
+            /** @description EventType UUID to book */
+            eventTypeId: string;
+            /** @description Guest full name */
+            guestName: string;
+            /**
+             * Format: email
+             * @description Guest email address
+             */
+            guestEmail: string;
+            /** @description Optional notes from the guest */
+            notes?: string;
+            /**
+             * Format: date-time
+             * @description Selected slot start time (ISO 8601)
+             */
+            startTime: string;
+            /**
+             * Format: date-time
+             * @description Selected slot end time (ISO 8601)
+             */
+            endTime: string;
+            /** @description Guest IANA timezone (e.g. Europe/Moscow) */
+            timezone?: string;
+        };
+        BookingResponse: {
+            /** @description Booking UUID */
+            id: string;
+            /** @description EventType UUID */
+            eventTypeId: string;
+            /** @description EventType title at time of booking */
+            eventTitle: string;
+            /** @description Guest full name */
+            guestName: string;
+            /** @description Guest email address */
+            guestEmail: string;
+            /** @description Optional notes from the guest */
+            notes?: string;
+            /**
+             * Format: date-time
+             * @description Booking start time (ISO 8601)
+             */
+            startTime: string;
+            /**
+             * Format: date-time
+             * @description Booking end time (ISO 8601)
+             */
+            endTime: string;
+            /**
+             * @description Booking status
+             * @enum {string}
+             */
+            status: "CONFIRMED" | "CANCELLED";
+            /**
+             * Format: date-time
+             * @description Creation timestamp
+             */
+            createdAt: string;
         };
     };
     responses: never;
@@ -1221,6 +1380,126 @@ export interface operations {
             };
             /** @description Event type not found */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getAvailability: {
+        parameters: {
+            query: {
+                /** @description Date to check (YYYY-MM-DD) */
+                date: string;
+            };
+            header?: never;
+            path: {
+                /** @description Event type UUID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Available time slots */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AvailabilitySlotsResponse"];
+                };
+            };
+            /** @description Event type not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getPublicEventType: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Owner user UUID */
+                userId: string;
+                /** @description Event type slug */
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Public event type details */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicEventTypeResponse"];
+                };
+            };
+            /** @description Event type not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    createBooking: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateBookingRequest"];
+            };
+        };
+        responses: {
+            /** @description Booking created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BookingResponse"];
+                };
+            };
+            /** @description Validation error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Event type not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Slot already booked */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };
