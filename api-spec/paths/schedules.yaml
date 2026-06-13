@@ -1,0 +1,138 @@
+paths:
+  /api/schedules:
+    post:
+      tags:
+        - schedules
+      summary: Create a new schedule
+      operationId: createSchedule
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/schedule.yaml#/CreateScheduleRequest"
+      responses:
+        "201":
+          description: Schedule created
+          content:
+            application/json:
+              schema:
+                $ref: "../components/schemas/schedule.yaml#/ScheduleResponse"
+        "400":
+          description: Validation error — overlapping windows, invalid dayOfWeek, or startTime >= endTime
+          content:
+            application/json:
+              schema:
+                $ref: "../components/schemas/ErrorResponse.yaml"
+              examples:
+                overlapping:
+                  summary: Availability windows overlap
+                  value:
+                    message: "Availability windows must not overlap"
+                invalidTime:
+                  summary: Invalid time range
+                  value:
+                    message: "startTime must be before endTime"
+                validation:
+                  summary: Validation error
+                  value:
+                    message: "name: Schedule name is required"
+        "401":
+          description: Unauthorized — missing or invalid JWT
+    get:
+      tags:
+        - schedules
+      summary: List schedules for current user
+      operationId: listSchedules
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: List of user schedules
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "../components/schemas/schedule.yaml#/ScheduleResponse"
+        "401":
+          description: Unauthorized — missing or invalid JWT
+
+  /api/schedules/{id}:
+    put:
+      tags:
+        - schedules
+      summary: Update a schedule
+      operationId: updateSchedule
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Schedule UUID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schemas/schedule.yaml#/UpdateScheduleRequest"
+      responses:
+        "200":
+          description: Schedule updated
+          content:
+            application/json:
+              schema:
+                $ref: "../components/schemas/schedule.yaml#/ScheduleResponse"
+        "400":
+          description: Validation error — overlapping windows, invalid dayOfWeek, or startTime >= endTime
+          content:
+            application/json:
+              schema:
+                $ref: "../components/schemas/ErrorResponse.yaml"
+              examples:
+                overlapping:
+                  summary: Availability windows overlap
+                  value:
+                    message: "Availability windows must not overlap"
+                invalidTime:
+                  summary: Invalid time range
+                  value:
+                    message: "startTime must be before endTime"
+        "401":
+          description: Unauthorized — missing or invalid JWT
+        "404":
+          description: Schedule not found
+          content:
+            application/json:
+              schema:
+                $ref: "../components/schemas/ErrorResponse.yaml"
+    delete:
+      tags:
+        - schedules
+      summary: Delete a schedule
+      operationId: deleteSchedule
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Schedule UUID
+      responses:
+        "204":
+          description: Schedule deleted
+        "401":
+          description: Unauthorized — missing or invalid JWT
+        "404":
+          description: Schedule not found
+          content:
+            application/json:
+              schema:
+                $ref: "../components/schemas/ErrorResponse.yaml"

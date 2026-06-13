@@ -1,0 +1,110 @@
+ScheduleResponse:
+  type: object
+  properties:
+    id:
+      type: string
+      description: Schedule UUID
+    userId:
+      type: string
+      description: Owner user UUID
+    name:
+      type: string
+      description: Schedule name
+    timezone:
+      type: string
+      description: IANA timezone (e.g. Europe/Moscow)
+    availabilities:
+      type: array
+      description: Availability windows
+      items:
+        $ref: "./availability.yaml"
+  required:
+    - id
+    - userId
+    - name
+    - timezone
+    - availabilities
+
+CreateScheduleRequest:
+  type: object
+  properties:
+    name:
+      type: string
+      description: Schedule name
+    timezone:
+      type: string
+      description: IANA timezone (e.g. Europe/Moscow)
+    availabilities:
+      type: array
+      description: Availability windows (without id — created by server)
+      items:
+        type: object
+        properties:
+          dayOfWeek:
+            type: string
+            enum:
+              - MON
+              - TUE
+              - WED
+              - THU
+              - FRI
+              - SAT
+              - SUN
+            description: Day of week
+          startTime:
+            type: string
+            pattern: "^([01]\\d|2[0-3]):[0-5]\\d$"
+            description: Start time in HH:MM format (24h)
+          endTime:
+            type: string
+            pattern: "^([01]\\d|2[0-3]):[0-5]\\d$"
+            description: End time in HH:MM format (24h)
+        required:
+          - dayOfWeek
+          - startTime
+          - endTime
+      minItems: 1
+  required:
+    - name
+    - timezone
+    - availabilities
+
+UpdateScheduleRequest:
+  type: object
+  properties:
+    name:
+      type: string
+      description: Schedule name
+    timezone:
+      type: string
+      description: IANA timezone (e.g. Europe/Moscow)
+    availabilities:
+      type: array
+      description: Availability windows (without id — replaces existing)
+      items:
+        type: object
+        properties:
+          dayOfWeek:
+            type: string
+            enum:
+              - MON
+              - TUE
+              - WED
+              - THU
+              - FRI
+              - SAT
+              - SUN
+            description: Day of week
+          startTime:
+            type: string
+            pattern: "^([01]\\d|2[0-3]):[0-5]\\d$"
+            description: Start time in HH:MM format (24h)
+          endTime:
+            type: string
+            pattern: "^([01]\\d|2[0-3]):[0-5]\\d$"
+            description: End time in HH:MM format (24h)
+        required:
+          - dayOfWeek
+          - startTime
+          - endTime
+      minItems: 1

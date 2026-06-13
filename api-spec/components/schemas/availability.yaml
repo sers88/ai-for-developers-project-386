@@ -1,0 +1,29 @@
+type: object
+properties:
+  id:
+    type: string
+    description: Availability window UUID
+  dayOfWeek:
+    type: string
+    enum:
+      - MON
+      - TUE
+      - WED
+      - THU
+      - FRI
+      - SAT
+      - SUN
+    description: Day of week
+  startTime:
+    type: string
+    pattern: "^([01]\\d|2[0-3]):[0-5]\\d$"
+    description: Start time in HH:MM format (24h)
+  endTime:
+    type: string
+    pattern: "^([01]\\d|2[0-3]):[0-5]\\d$"
+    description: End time in HH:MM format (24h)
+required:
+  - id
+  - dayOfWeek
+  - startTime
+  - endTime

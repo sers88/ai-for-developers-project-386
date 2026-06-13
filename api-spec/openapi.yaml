@@ -13,6 +13,8 @@ tags:
     description: "Authentication & registration"
   - name: users
     description: "User profile"
+  - name: schedules
+    description: "Schedule & availability management"
 paths:
   /api/auth/register:
     $ref: "./paths/auth.yaml#/paths/~1api~1auth~1register"
@@ -26,6 +28,10 @@ paths:
     $ref: "./paths/auth.yaml#/paths/~1api~1auth~1oauth2~1google~1callback"
   /api/me:
     $ref: "./paths/users.yaml#/paths/~1api~1me"
+  /api/schedules:
+    $ref: "./paths/schedules.yaml#/paths/~1api~1schedules"
+  /api/schedules/{id}:
+    $ref: "./paths/schedules.yaml#/paths/~1api~1schedules~1{id}"
 components:
   securitySchemes:
     bearerAuth:

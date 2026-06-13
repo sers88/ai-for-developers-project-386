@@ -106,6 +106,42 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/schedules": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List schedules for current user */
+        get: operations["listSchedules"];
+        put?: never;
+        /** Create a new schedule */
+        post: operations["createSchedule"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/schedules/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Update a schedule */
+        put: operations["updateSchedule"];
+        post?: never;
+        /** Delete a schedule */
+        delete: operations["deleteSchedule"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -155,6 +191,67 @@ export interface components {
         TokenResponse: {
             /** @description New JWT access token */
             accessToken: string;
+        };
+        availability: {
+            /** @description Availability window UUID */
+            id: string;
+            /**
+             * @description Day of week
+             * @enum {string}
+             */
+            dayOfWeek: "MON" | "TUE" | "WED" | "THU" | "FRI" | "SAT" | "SUN";
+            /** @description Start time in HH:MM format (24h) */
+            startTime: string;
+            /** @description End time in HH:MM format (24h) */
+            endTime: string;
+        };
+        ScheduleResponse: {
+            /** @description Schedule UUID */
+            id: string;
+            /** @description Owner user UUID */
+            userId: string;
+            /** @description Schedule name */
+            name: string;
+            /** @description IANA timezone (e.g. Europe/Moscow) */
+            timezone: string;
+            /** @description Availability windows */
+            availabilities: components["schemas"]["availability"][];
+        };
+        CreateScheduleRequest: {
+            /** @description Schedule name */
+            name: string;
+            /** @description IANA timezone (e.g. Europe/Moscow) */
+            timezone: string;
+            /** @description Availability windows (without id — created by server) */
+            availabilities: {
+                /**
+                 * @description Day of week
+                 * @enum {string}
+                 */
+                dayOfWeek: "MON" | "TUE" | "WED" | "THU" | "FRI" | "SAT" | "SUN";
+                /** @description Start time in HH:MM format (24h) */
+                startTime: string;
+                /** @description End time in HH:MM format (24h) */
+                endTime: string;
+            }[];
+        };
+        UpdateScheduleRequest: {
+            /** @description Schedule name */
+            name?: string;
+            /** @description IANA timezone (e.g. Europe/Moscow) */
+            timezone?: string;
+            /** @description Availability windows (without id — replaces existing) */
+            availabilities?: {
+                /**
+                 * @description Day of week
+                 * @enum {string}
+                 */
+                dayOfWeek: "MON" | "TUE" | "WED" | "THU" | "FRI" | "SAT" | "SUN";
+                /** @description Start time in HH:MM format (24h) */
+                startTime: string;
+                /** @description End time in HH:MM format (24h) */
+                endTime: string;
+            }[];
         };
     };
     responses: never;
@@ -329,6 +426,162 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    listSchedules: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description List of user schedules */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScheduleResponse"][];
+                };
+            };
+            /** @description Unauthorized — missing or invalid JWT */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    createSchedule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateScheduleRequest"];
+            };
+        };
+        responses: {
+            /** @description Schedule created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScheduleResponse"];
+                };
+            };
+            /** @description Validation error — overlapping windows, invalid dayOfWeek, or startTime >= endTime */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized — missing or invalid JWT */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    updateSchedule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Schedule UUID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateScheduleRequest"];
+            };
+        };
+        responses: {
+            /** @description Schedule updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScheduleResponse"];
+                };
+            };
+            /** @description Validation error — overlapping windows, invalid dayOfWeek, or startTime >= endTime */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized — missing or invalid JWT */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Schedule not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    deleteSchedule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Schedule UUID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Schedule deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized — missing or invalid JWT */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Schedule not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
             };
         };
     };
