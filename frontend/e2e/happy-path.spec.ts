@@ -33,6 +33,8 @@ test.describe("Happy path: register → schedule → event type → book → can
     test.setTimeout(120_000)
 
     page.on("dialog", (dialog) => dialog.accept())
+    page.on("console", (msg) => console.log(`BROWSER [${msg.type()}]:`, msg.text()))
+    page.on("pageerror", (err) => console.log("BROWSER ERROR:", err.message))
 
     const email = uniqueEmail()
 
