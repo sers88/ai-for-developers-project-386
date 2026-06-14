@@ -63,6 +63,7 @@ class GoogleCalendarIntegrationTest {
         private val emailCounter = AtomicInteger(0)
     }
 
+    @Suppress("UNCHECKED_CAST")
     private fun registerAndGetToken(): Pair<String, UUID> {
         val email = "cal${emailCounter.incrementAndGet()}@example.com"
         val request = RegisterRequest(email = email, password = "password123")
