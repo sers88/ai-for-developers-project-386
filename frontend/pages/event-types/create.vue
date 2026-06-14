@@ -30,7 +30,7 @@ const submit = handleSubmit(async (values) => {
 
 <template>
   <div class="page">
-    <h1>New Event Type</h1>
+    <h1 data-testid="page-heading">New Event Type</h1>
 
     <form @submit.prevent="submit">
       <div class="field">
@@ -41,6 +41,7 @@ const submit = handleSubmit(async (values) => {
           name="title"
           type="text"
           placeholder="e.g. Consultation"
+          data-testid="event-title"
         >
         <p v-if="errors.title" class="field-error">{{ errors.title }}</p>
       </div>
@@ -64,13 +65,14 @@ const submit = handleSubmit(async (values) => {
           name="duration"
           type="number"
           min="5"
+          data-testid="event-duration"
         >
         <p v-if="errors.duration" class="field-error">{{ errors.duration }}</p>
       </div>
 
       <div class="field">
         <label for="scheduleId">Schedule</label>
-        <select id="scheduleId" v-model="scheduleId" name="scheduleId" :disabled="schedulesLoading">
+        <select id="scheduleId" v-model="scheduleId" name="scheduleId" :disabled="schedulesLoading" data-testid="schedule-select">
           <option value="">None</option>
           <option v-for="s in schedules" :key="s.id" :value="s.id">
             {{ s.name }} ({{ s.timezone }})
@@ -107,7 +109,7 @@ const submit = handleSubmit(async (values) => {
 
       <div class="actions">
         <NuxtLink to="/event-types" class="btn-cancel">Cancel</NuxtLink>
-        <button type="submit" class="btn-save" :disabled="isSubmitting">
+        <button type="submit" class="btn-save" :disabled="isSubmitting" data-testid="event-create-submit">
           {{ isSubmitting ? "Creating..." : "Create" }}
         </button>
       </div>

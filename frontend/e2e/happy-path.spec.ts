@@ -17,12 +17,12 @@ async function navigateToBookingDay(page: Page, target: Date): Promise<void> {
   const targetMonth = target.toLocaleDateString("en-US", { month: "long", year: "numeric" })
 
   for (let i = 0; i < 3; i++) {
-    const label = await page.locator(".month-label").textContent()
+    const label = await page.getByTestId("calendar-month-label").textContent()
     if (label === targetMonth) break
-    await page.locator(".nav-btn").last().click()
+    await page.getByTestId("calendar-next-month").click()
   }
 
-  const dayCell = page.locator(".calendar-day:not(.empty)").filter({
+  const dayCell = page.getByTestId("calendar-day").filter({
     hasText: String(target.getDate()),
   })
   await dayCell.click()
@@ -38,44 +38,44 @@ test.describe("Happy path: register → schedule → event type → book → can
 
     // ── 1. Register ──────────────────────────────────────────────
     await page.goto("/register")
-    await page.locator("#email").fill(email)
-    await page.locator("#password").fill("password123")
-    await page.locator('button[type="submit"]').click()
+    await page.getByTestId("email").fill(email)
+    await page.getByTestId("password").fill("password123")
+    await page.getByTestId("register-submit").click()
 
     await expect(page).toHaveURL(/\/dashboard/, { timeout: 30_000 })
-    await expect(page.locator("h1")).toHaveText("Dashboard")
+    await expect(page.getByTestId("page-heading")).toHaveText("Dashboard")
 
     // ── 2. Save schedule (default Mon–Fri 09:00–18:00) ──────────
     await page.goto("/schedules")
-    await expect(page.locator("h1")).toHaveText("Schedule Settings")
-    await expect(page.locator(".day-row").first()).toBeVisible({ timeout: 10_000 })
+    await expect(page.getByTestId("page-heading")).toHaveText("Schedule Settings")
+    await expect(page.getByTestId("schedule-day-row").first()).toBeVisible({ timeout: 10_000 })
 
     await Promise.all([
       page.waitForResponse(
         (resp) => resp.url().includes("/api/schedules") && resp.request().method() === "PUT",
         { timeout: 15_000 },
       ),
-      page.locator(".btn-save").click(),
+      page.getByTestId("schedule-save").click(),
     ])
 
     // ── 3. Create event type ────────────────────────────────────
     await page.goto("/event-types/create")
-    await expect(page.locator("h1")).toHaveText("New Event Type")
+    await expect(page.getByTestId("page-heading")).toHaveText("New Event Type")
 
-    await page.locator("#title").fill("E2E Consultation")
-    await page.locator("#duration").fill("30")
+    await page.getByTestId("event-title").fill("E2E Consultation")
+    await page.getByTestId("event-duration").fill("30")
 
     // Wait for schedules to load in dropdown, then select first one
     await page.waitForFunction(
       () => {
-        const sel = document.querySelector("#scheduleId")
+        const sel = document.querySelector('[data-testid="schedule-select"]')
         return sel !== null && sel.querySelectorAll("option").length > 1
       },
       { timeout: 10_000 },
     )
-    await page.locator("#scheduleId").selectOption({ index: 1 })
+    await page.getByTestId("schedule-select").selectOption({ index: 1 })
 
-    await page.locator('button[type="submit"]').click()
+    await page.getByTestId("event-create-submit").click()
     await expect(page).toHaveURL(/\/event-types$/, { timeout: 15_000 })
 
     // ── 4. Get booking URL from API ─────────────────────────────
@@ -99,37 +99,37 @@ test.describe("Happy path: register → schedule → event type → book → can
 
     // ── 5. Book a slot on the public booking page ───────────────
     await page.goto(bookingUrl)
-    await expect(page.locator("h1")).toHaveText("E2E Consultation")
+    await expect(page.getByTestId("page-heading")).toHaveText("E2E Consultation")
 
     const targetDate = nextWeekday()
     await navigateToBookingDay(page, targetDate)
 
-    await page.waitForSelector(".slot-btn", { timeout: 15_000 })
-    await page.locator(".slot-btn").first().click()
+    await expect(page.getByTestId("time-slot").first()).toBeVisible({ timeout: 15_000 })
+    await page.getByTestId("time-slot").first().click()
 
-    await page.locator("#guestName").fill("Test Guest")
-    await page.locator("#guestEmail").fill("guest@test.com")
+    await page.getByTestId("guest-name").fill("Test Guest")
+    await page.getByTestId("guest-email").fill("guest@test.com")
 
     const [bookingResp] = await Promise.all([
       page.waitForResponse(
         (resp) => resp.url().includes("/api/bookings") && resp.request().method() === "POST",
         { timeout: 15_000 },
       ),
-      page.locator(".btn-book").click(),
+      page.getByTestId("confirm-booking").click(),
     ])
     expect(bookingResp.ok()).toBeTruthy()
 
     const bookingData = await bookingResp.json()
     await page.goto(`${bookingUrl}/success?id=${bookingData.id}`)
-    await expect(page.locator("body")).toContainText("Booking Confirmed")
+    await expect(page.getByTestId("booking-confirmed")).toBeVisible()
 
     // ── 6. Cancel booking from dashboard ────────────────────────
     await page.goto("/dashboard")
-    await expect(page.locator("h1")).toHaveText("Dashboard")
+    await expect(page.getByTestId("page-heading")).toHaveText("Dashboard")
 
-    await page.waitForSelector(".btn-cancel", { timeout: 10_000 })
-    await page.locator(".btn-cancel").first().click()
+    await expect(page.getByTestId("cancel-booking").first()).toBeVisible({ timeout: 10_000 })
+    await page.getByTestId("cancel-booking").first().click()
 
-    await expect(page.locator(".badge.cancelled")).toBeVisible({ timeout: 10_000 })
+    await expect(page.getByTestId("booking-status-cancelled").first()).toBeVisible({ timeout: 10_000 })
   })
 })

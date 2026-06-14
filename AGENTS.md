@@ -2,7 +2,7 @@
 
 ## Architecture
 
-Monorepo: **backend** (Spring Boot 3.4, Kotlin 2.1, Gradle 8.13, Java 21) + **frontend** (Nuxt 3.15, Vue 3.5, Node 22, SPA mode `ssr: false`). PostgreSQL 16 via Docker Compose.
+Monorepo: **backend** (Spring Boot 3.4, Kotlin 2.1, Gradle 8.13, Java 21) + **frontend** (Nuxt 4, Vue 3.5, Node 22, SPA mode `ssr: false`, Nuxt UI v4 + Tailwind CSS v4). PostgreSQL 16 via Docker Compose.
 
 ## Commands
 
@@ -41,6 +41,18 @@ npm run build                    # production build
 - **VeeValidate `<Form>`/`<Field>` components don't render in vitest** → test validation logic directly with `useForm()` composable instead.
 - **Vitest config** needs `@vitejs/plugin-vue` and `environment: "happy-dom"`.
 - **`@vee-validate/zod`** must be installed alongside `zod@3` (zod@4 is incompatible).
+
+### Nuxt UI v4
+- **`U*` components are auto-imported** — no import needed for `UButton`, `UInput`, `UCard`, `UForm`, `UDropdownMenu`, `UApp`, etc.
+- **Icons**: use `<UIcon name="i-lucide-..." />` (Iconify Lucide set, bundled via `@nuxt/icon`).
+- **Colors**: use semantic aliases (`primary`, `neutral`, `error`, `success`, etc.) on the `color` prop — NOT raw Tailwind palette names. Configured in `app.config.ts` (`ui.colors.primary = "green"`).
+- **Design tokens**: `bg-default`, `bg-muted`, `text-highlighted`, `text-muted`, `border-default` etc. are Nuxt UI semantic aliases usable as Tailwind classes.
+- **`UForm` integrates with `vee-validate + zod`** — use it with `:state` + `:schema` instead of manual `<Field>` wrappers.
+- **Layouts**: `layouts/default.vue` (sidebar + topbar for auth zone), `layouts/auth.vue` (centered card), `layouts/public.vue` (minimal skeleton). Assign via `definePageMeta({ layout: "..." })`.
+- **`<UApp>` must wrap everything in `app.vue`** — required for Toast/Tooltip/overlays.
+- **Dark mode**: `@nuxtjs/color-mode` is auto-registered; toggle with `useColorMode().preference`. Persists between sessions.
+- **Fonts**: configured via `--font-sans` in `@theme` block of `assets/css/main.css`; loaded automatically by `@nuxt/fonts`.
+- **e2e selectors**: use `data-testid` attributes + Playwright `getByTestId()` — do NOT rely on CSS classes/ids.
 
 ### CI
 - **Backend CI runs lint + compile only** — tests are skipped with `-x test`.

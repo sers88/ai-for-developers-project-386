@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import type { components } from "~/api/generated/schema"
 
+definePageMeta({
+  layout: "public",
+})
+
 const route = useRoute()
 const { getPublicEventType } = usePublicBooking()
 
@@ -34,7 +38,7 @@ try {
         </svg>
       </div>
 
-      <h1>Booking Confirmed!</h1>
+      <h1 data-testid="booking-confirmed">Booking Confirmed!</h1>
 
       <div v-if="eventType" class="booking-details">
         <h2>{{ eventType.title }}</h2>

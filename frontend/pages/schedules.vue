@@ -11,12 +11,12 @@ await load()
 
 <template>
   <div class="page">
-    <h1>Schedule Settings</h1>
+    <h1 data-testid="page-heading">Schedule Settings</h1>
 
     <div v-if="loading" class="loading">Loading...</div>
 
     <div v-else class="schedule-grid">
-      <div v-for="day in days" :key="day.value" class="day-row">
+      <div v-for="day in days" :key="day.value" class="day-row" data-testid="schedule-day-row">
         <div class="day-label">{{ day.label }}</div>
         <div class="day-slots">
           <div v-for="(slot, index) in slots[day.value]" :key="index" class="slot">
@@ -47,7 +47,7 @@ await load()
     <p v-if="generalError" class="error">{{ generalError }}</p>
 
     <div class="actions">
-      <button class="btn-save" :disabled="saving || loading" @click="save">
+      <button class="btn-save" :disabled="saving || loading" data-testid="schedule-save" @click="save">
         {{ saving ? "Saving..." : "Save" }}
       </button>
     </div>
