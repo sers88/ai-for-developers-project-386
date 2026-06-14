@@ -17,12 +17,12 @@ type SlotsByDay = Record<DayOfWeek, { startTime: string; endTime: string }[]>
 
 function minutes(time: string): number {
   const [h, m] = time.split(":").map(Number)
-  return h * 60 + m
+  return (h ?? 0) * 60 + (m ?? 0)
 }
 
 function formatTime(value: string): string {
   const parts = value.split(":")
-  return `${parts[0].padStart(2, "0")}:${parts[1].padStart(2, "0")}`
+  return `${(parts[0] ?? "0").padStart(2, "0")}:${(parts[1] ?? "0").padStart(2, "0")}`
 }
 
 export function useScheduleForm() {
@@ -76,9 +76,10 @@ export function useScheduleForm() {
     try {
       const schedules = await loadSchedules()
       if (schedules.length > 0) {
-        scheduleId.value = schedules[0].id
-        timezone.value = schedules[0].timezone
-        initFromAvailabilities(schedules[0].availabilities)
+        const first = schedules[0]!
+        scheduleId.value = first.id
+        timezone.value = first.timezone
+        initFromAvailabilities(first.availabilities)
       }
     } catch (e) {
       generalError.value = e instanceof Error ? e.message : "Failed to load"

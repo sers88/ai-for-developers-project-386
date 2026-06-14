@@ -1,29 +1,36 @@
 import { describe, expect, it } from "vitest"
 
+type Day = "MON" | "TUE" | "WED" | "THU" | "FRI" | "SAT" | "SUN"
+type Slot = { startTime: string; endTime: string }
+type SlotsByDay = Record<Day, Slot[]>
+
+const DAYS: Day[] = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"]
+
 function minutes(time: string): number {
   const [h, m] = time.split(":").map(Number)
-  return h * 60 + m
+  return (h ?? 0) * 60 + (m ?? 0)
 }
 
 function formatTime(value: string): string {
   const parts = value.split(":")
-  return `${parts[0].padStart(2, "0")}:${parts[1].padStart(2, "0")}`
+  return `${(parts[0] ?? "0").padStart(2, "0")}:${(parts[1] ?? "0").padStart(2, "0")}`
 }
 
-function initEmptySlots() {
-  const days = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"] as const
-  const slots: Record<string, { startTime: string; endTime: string }[]> = {}
-  for (const day of days) {
+function initEmptySlots(): SlotsByDay {
+  const slots = {} as SlotsByDay
+  for (const day of DAYS) {
     slots[day] = []
   }
   return slots
 }
 
-function hasOverlap(slots: Record<string, { startTime: string; endTime: string }[]>): boolean {
-  for (const day of Object.keys(slots)) {
+function hasOverlap(slots: SlotsByDay): boolean {
+  for (const day of DAYS) {
     const daySlots = [...slots[day]].sort((a, b) => minutes(a.startTime) - minutes(b.startTime))
     for (let i = 0; i < daySlots.length - 1; i++) {
-      if (minutes(daySlots[i].endTime) > minutes(daySlots[i + 1].startTime)) {
+      const current = daySlots[i]!
+      const next = daySlots[i + 1]!
+      if (minutes(current.endTime) > minutes(next.startTime)) {
         return true
       }
     }
@@ -31,8 +38,8 @@ function hasOverlap(slots: Record<string, { startTime: string; endTime: string }
   return false
 }
 
-function hasInvalidTime(slots: Record<string, { startTime: string; endTime: string }[]>): boolean {
-  for (const day of Object.keys(slots)) {
+function hasInvalidTime(slots: SlotsByDay): boolean {
+  for (const day of DAYS) {
     for (const slot of slots[day]) {
       if (minutes(slot.startTime) >= minutes(slot.endTime)) return true
     }

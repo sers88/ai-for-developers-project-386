@@ -5,7 +5,6 @@ definePageMeta({
   middleware: ["auth"],
 })
 
-const store = useAuthStore()
 const api = useApiClient()
 const { loadBookings, cancelBooking } = useBookings()
 
@@ -38,11 +37,6 @@ async function handleCancel(id: string) {
   }
 }
 
-async function logout() {
-  store.clearAuth()
-  await navigateTo("/login")
-}
-
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleString(undefined, {
     weekday: "short",
@@ -61,8 +55,7 @@ await load()
 <template>
   <div class="page">
     <div class="header">
-      <h1>Dashboard</h1>
-      <button type="button" class="btn-logout" @click="logout">Logout</button>
+      <h1 data-testid="page-heading">Dashboard</h1>
     </div>
     <p v-if="me" class="welcome">Welcome, {{ me.email }}</p>
 
@@ -103,18 +96,12 @@ await load()
           </div>
           <p class="date">{{ formatDate(b.startTime) }}</p>
           <p v-if="b.notes" class="notes">{{ b.notes }}</p>
-          <span v-if="b.status === 'CANCELLED'" class="badge cancelled">Cancelled</span>
+          <span v-if="b.status === 'CANCELLED'" class="badge cancelled" data-testid="booking-status-cancelled">Cancelled</span>
         </div>
         <div v-if="b.status === 'CONFIRMED'" class="card-actions">
-          <button type="button" class="btn-cancel" @click="handleCancel(b.id)">Cancel</button>
+          <button type="button" class="btn-cancel" data-testid="cancel-booking" @click="handleCancel(b.id)">Cancel</button>
         </div>
       </div>
-    </div>
-
-    <div class="nav-links">
-      <NuxtLink to="/event-types" class="nav-link">Event Types</NuxtLink>
-      <NuxtLink to="/schedules" class="nav-link">Schedules</NuxtLink>
-      <NuxtLink to="/settings" class="nav-link">Settings</NuxtLink>
     </div>
   </div>
 </template>
@@ -123,8 +110,6 @@ await load()
 .page { max-width: 800px; margin: 0 auto; padding: 2rem 1rem; }
 .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
 .header h1 { margin: 0; }
-.btn-logout { background: none; color: #666; border: 1px solid #ddd; padding: 0.4rem 1rem; border-radius: 6px; cursor: pointer; font-size: 0.9rem; }
-.btn-logout:hover { background: #f5f5f5; }
 .welcome { color: #666; margin: 0 0 1.5rem; }
 .tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; }
 .tab { background: none; border: 1px solid #ddd; padding: 0.4rem 1.25rem; border-radius: 6px; cursor: pointer; font-size: 0.9rem; color: #666; }
@@ -145,7 +130,4 @@ await load()
 .card-actions { display: flex; gap: 0.5rem; flex-shrink: 0; margin-left: 1rem; }
 .btn-cancel { background: none; color: #cc0000; border: 1px solid #cc0000; padding: 0.35rem 0.75rem; border-radius: 4px; cursor: pointer; font-size: 0.85rem; }
 .btn-cancel:hover { background: #cc0000; color: #fff; }
-.nav-links { display: flex; gap: 1.5rem; margin-top: 2rem; justify-content: center; }
-.nav-link { color: #0070f3; text-decoration: none; font-size: 0.9rem; }
-.nav-link:hover { text-decoration: underline; }
 </style>

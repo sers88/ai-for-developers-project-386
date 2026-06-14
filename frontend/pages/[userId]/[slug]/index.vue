@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import type { components } from "~/api/generated/schema"
 
+definePageMeta({
+  layout: "public",
+})
+
 const route = useRoute()
 const { getPublicEventType, getAvailability, createBooking } = usePublicBooking()
 
@@ -149,13 +153,13 @@ async function submitBooking() {
     <div v-if="loadingEvent" class="loading">Loading...</div>
 
     <div v-else-if="loadError" class="error-block">
-      <h1>Event Not Found</h1>
+      <h1 data-testid="page-heading">Event Not Found</h1>
       <p>{{ loadError }}</p>
     </div>
 
     <div v-else-if="eventType" class="booking-container">
       <div class="event-info">
-        <h1>{{ eventType.title }}</h1>
+        <h1 data-testid="page-heading">{{ eventType.title }}</h1>
         <p v-if="eventType.description" class="description">{{ eventType.description }}</p>
         <p class="duration">{{ eventType.duration }} min</p>
         <p v-if="eventType.ownerName" class="owner">with {{ eventType.ownerName }}</p>
@@ -166,15 +170,16 @@ async function submitBooking() {
         <div class="calendar-section">
           <h2>Select a date</h2>
           <div class="calendar-header">
-            <button type="button" class="nav-btn" @click="prevMonth">&lt;</button>
-            <span class="month-label">{{ monthLabel }}</span>
-            <button type="button" class="nav-btn" @click="nextMonth">&gt;</button>
+            <button type="button" class="nav-btn" data-testid="calendar-prev-month" @click="prevMonth">&lt;</button>
+            <span class="month-label" data-testid="calendar-month-label">{{ monthLabel }}</span>
+            <button type="button" class="nav-btn" data-testid="calendar-next-month" @click="nextMonth">&gt;</button>
           </div>
           <div class="calendar-grid">
             <div v-for="day in weekDays" :key="day" class="week-day">{{ day }}</div>
             <div
               v-for="(day, idx) in monthDays"
               :key="idx"
+              :data-testid="day ? 'calendar-day' : undefined"
               class="calendar-day"
               :class="{
                 empty: !day,
@@ -199,6 +204,7 @@ async function submitBooking() {
               type="button"
               class="slot-btn"
               :class="{ active: selectedSlot?.start === slot.start }"
+              data-testid="time-slot"
               @click="selectSlot(slot)"
             >
               {{ formatSlotTime(slot.start) }}
@@ -216,6 +222,7 @@ async function submitBooking() {
                 v-model="guestName"
                 type="text"
                 placeholder="Your name"
+                data-testid="guest-name"
                 required
               >
             </div>
@@ -226,6 +233,7 @@ async function submitBooking() {
                 v-model="guestEmail"
                 type="email"
                 placeholder="you@example.com"
+                data-testid="guest-email"
                 required
               >
             </div>
@@ -239,7 +247,7 @@ async function submitBooking() {
               />
             </div>
             <p v-if="bookingError" class="error">{{ bookingError }}</p>
-            <button type="submit" class="btn-book" :disabled="submitting">
+            <button type="submit" class="btn-book" :disabled="submitting" data-testid="confirm-booking">
               {{ submitting ? "Booking..." : "Confirm Booking" }}
             </button>
           </form>

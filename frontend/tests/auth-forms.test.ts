@@ -12,7 +12,7 @@ defineRule("email", (value: string) => {
 })
 
 defineRule("min", (value: string, [limit]: number[]) => {
-  if (!value || value.length < limit) return `Must be at least ${limit} characters`
+  if (!value || value.length < (limit ?? 0)) return `Must be at least ${limit} characters`
   return true
 })
 

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 definePageMeta({
-  layout: false,
+  layout: "auth",
 })
 
  const { submit, errors, isSubmitting, generalError, email, password } = useRegisterForm()
@@ -19,6 +19,7 @@ const { redirectToGoogle } = useGoogleAuth()
           name="email"
           type="email"
           placeholder="email@example.com"
+          data-testid="email"
         >
         <p v-if="errors.email" class="error">{{ errors.email }}</p>
       </div>
@@ -30,13 +31,14 @@ const { redirectToGoogle } = useGoogleAuth()
           name="password"
           type="password"
           placeholder="Min. 6 characters"
+          data-testid="password"
         >
         <p v-if="errors.password" class="error">{{ errors.password }}</p>
       </div>
       <p v-if="generalError" class="error">{{ generalError }}</p>
-      <button type="submit" :disabled="isSubmitting">
-        {{ isSubmitting ? "Loading..." : "Register" }}
-      </button>
+        <button type="submit" :disabled="isSubmitting" data-testid="register-submit">
+          {{ isSubmitting ? "Loading..." : "Register" }}
+        </button>
     </form>
     <div class="oauth-divider">
       <span>or</span>
