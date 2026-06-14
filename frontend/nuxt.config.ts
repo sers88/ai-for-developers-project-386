@@ -6,6 +6,9 @@ export default defineNuxtConfig({
   css: ["~/assets/css/main.css"],
   ssr: false,
   modules: ["@pinia/nuxt"],
+  experimental: {
+    viteEnvironmentApi: true,
+  },
   runtimeConfig: {
     public: {
       apiBase: process.env.NUXT_PUBLIC_API_BASE || "http://localhost:8080",

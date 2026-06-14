@@ -10,6 +10,7 @@
     "lint": "eslint . --ext .ts,.vue",
     "typecheck": "vue-tsc --noEmit",
     "test": "vitest run",
+    "test:e2e": "playwright test",
     "spec:lint": "redocly lint ../api-spec/openapi.yaml --config ../api-spec/redocly.yaml",
     "spec:bundle": "redocly bundle ../api-spec/openapi.yaml -o ../api-spec/dist/openapi.json --config ../api-spec/redocly.yaml",
     "generate:api": "openapi-typescript ../api-spec/dist/openapi.json -o ./api/generated/schema.d.ts"
@@ -27,6 +28,7 @@
   "devDependencies": {
     "@nuxt/eslint-config": "^1.16.0",
     "@nuxt/test-utils": "^4.0.3",
+    "@playwright/test": "^1.49.0",
     "@redocly/cli": "^2.32.2",
     "@types/node": "^25.9.3",
     "@vue/test-utils": "^2.4.11",
@@ -38,5 +40,8 @@
     "typescript": "^5.7.0",
     "vitest": "^4.1.8",
     "vue-tsc": "^2.2.0"
+  },
+  "overrides": {
+    "vite": "^7.3.5"
   }
 }

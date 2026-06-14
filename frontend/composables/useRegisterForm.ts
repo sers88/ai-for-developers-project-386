@@ -11,9 +11,12 @@ const schema = toTypedSchema(
 
 export function useRegisterForm() {
   const generalError = ref<string | null>(null)
-  const { handleSubmit, errors, isSubmitting } = useForm({
+  const { handleSubmit, errors, isSubmitting, defineField } = useForm({
     validationSchema: schema,
   })
+
+  const [email] = defineField("email")
+  const [password] = defineField("password")
 
   const submit = handleSubmit(async (values) => {
     generalError.value = null
@@ -26,5 +29,5 @@ export function useRegisterForm() {
     }
   })
 
-  return { submit, errors, isSubmitting, generalError }
+  return { submit, errors, isSubmitting, generalError, email, password }
 }

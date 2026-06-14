@@ -40,7 +40,7 @@ class AvailabilityService(
 
         val windows =
             schedule.availabilities
-                .filter { it.dayOfWeek == dayOfWeek.name }
+                .filter { it.dayOfWeek == dayOfWeek.name.take(3) }
                 .sortedBy { it.startTime }
 
         if (windows.isEmpty()) {

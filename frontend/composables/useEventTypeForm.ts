@@ -15,7 +15,7 @@ const schema = toTypedSchema(
 
 export function useEventTypeForm() {
   const generalError = ref<string | null>(null)
-  const { handleSubmit, errors, isSubmitting, resetForm } = useForm({
+  const { handleSubmit, errors, isSubmitting, resetForm, defineField } = useForm({
     validationSchema: schema,
     initialValues: {
       title: "",
@@ -26,6 +26,13 @@ export function useEventTypeForm() {
       bufferAfter: 0,
     },
   })
+
+  const [title] = defineField("title")
+  const [description] = defineField("description")
+  const [duration] = defineField("duration")
+  const [scheduleId] = defineField("scheduleId")
+  const [bufferBefore] = defineField("bufferBefore")
+  const [bufferAfter] = defineField("bufferAfter")
 
   function initFromEventType(data: {
     title: string
@@ -47,5 +54,5 @@ export function useEventTypeForm() {
     })
   }
 
-  return { errors, isSubmitting, generalError, handleSubmit, initFromEventType }
+  return { errors, isSubmitting, generalError, handleSubmit, initFromEventType, title, description, duration, scheduleId, bufferBefore, bufferAfter }
 }
