@@ -3,51 +3,76 @@ definePageMeta({
   layout: "auth",
 })
 
- const { submit, errors, isSubmitting, generalError, email, password } = useLoginForm()
+const { schema, state, onSubmit, isSubmitting, generalError } = useLoginForm()
 const { redirectToGoogle } = useGoogleAuth()
 </script>
 
 <template>
-  <div class="page">
-    <h1>Login</h1>
-    <form @submit.prevent="submit">
-      <div>
-        <label for="email">Email</label>
-        <input
-          id="email"
-          v-model="email"
-          name="email"
+  <div class="flex flex-col gap-6">
+    <div class="text-center">
+      <h1 class="text-2xl font-bold text-highlighted">Login</h1>
+    </div>
+
+    <p
+      v-if="generalError"
+      class="rounded-md bg-error/10 px-3 py-2 text-sm text-error"
+      data-testid="general-error"
+    >
+      {{ generalError }}
+    </p>
+
+    <UForm
+      :schema="schema"
+      :state="state"
+      class="flex flex-col gap-4"
+      @submit="onSubmit"
+    >
+      <UFormField label="Email" name="email">
+        <UInput
+          v-model="state.email"
           type="email"
           placeholder="email@example.com"
+          autocomplete="email"
           data-testid="email"
-        >
-        <p v-if="errors.email" class="error">{{ errors.email }}</p>
-      </div>
-      <div>
-        <label for="password">Password</label>
-        <input
-          id="password"
-          v-model="password"
-          name="password"
+        />
+      </UFormField>
+
+      <UFormField label="Password" name="password">
+        <UInput
+          v-model="state.password"
           type="password"
           placeholder="Enter password"
+          autocomplete="current-password"
           data-testid="password"
-        >
-        <p v-if="errors.password" class="error">{{ errors.password }}</p>
-      </div>
-      <p v-if="generalError" class="error">{{ generalError }}</p>
-        <button type="submit" :disabled="isSubmitting" data-testid="login-submit">
-          {{ isSubmitting ? "Loading..." : "Login" }}
-        </button>
-    </form>
-    <div class="oauth-divider">
-      <span>or</span>
-    </div>
-    <button class="google-btn" @click="redirectToGoogle">
+        />
+      </UFormField>
+
+      <UButton
+        type="submit"
+        :loading="isSubmitting"
+        block
+        data-testid="login-submit"
+      >
+        Login
+      </UButton>
+    </UForm>
+
+    <USeparator label="or" />
+
+    <UButton
+      color="neutral"
+      variant="outline"
+      block
+      icon="i-logos-google"
+      data-testid="google-login"
+      @click="redirectToGoogle"
+    >
       Sign in with Google
-    </button>
-    <p>
-      Don't have an account? <NuxtLink to="/register">Register</NuxtLink>
+    </UButton>
+
+    <p class="text-center text-sm text-muted">
+      Don't have an account?
+      <NuxtLink to="/register" class="font-medium text-primary">Register</NuxtLink>
     </p>
   </div>
 </template>

@@ -1,4 +1,4 @@
- <script setup lang="ts">
+<script setup lang="ts">
 definePageMeta({
   layout: "auth",
 })
@@ -19,7 +19,12 @@ if (accessToken && refreshToken && email) {
 </script>
 
 <template>
-  <div class="page">
-    <p>Completing sign in...</p>
+  <div class="flex flex-col items-center gap-4 py-8">
+    <UIcon
+      name="i-lucide-loader-circle"
+      class="size-8 animate-spin text-primary"
+      data-testid="callback-spinner"
+    />
+    <p class="text-sm text-muted">Completing sign in...</p>
   </div>
 </template>
