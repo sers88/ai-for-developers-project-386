@@ -1,9 +1,15 @@
 <script setup lang="ts">
 import { useApiClient } from "~/api/client"
+import type { components } from "~/api/generated/schema"
 
 definePageMeta({
+  layout: "default",
   middleware: ["auth"],
 })
+
+type Booking = components["schemas"]["BookingResponse"]
+type BookingStatusKind = "confirmed" | "completed" | "cancelled"
+type BookingFilter = "upcoming" | "past"
 
 const api = useApiClient()
 const { loadBookings, cancelBooking } = useBookings()
@@ -13,7 +19,28 @@ const { data: me } = await api.GET("/api/me")
 const loading = ref(true)
 const generalError = ref<string | null>(null)
 const bookings = ref<Awaited<ReturnType<typeof loadBookings>>>([])
-const filter = ref<"upcoming" | "past">("upcoming")
+const filter = ref<BookingFilter>("upcoming")
+
+const tabItems: { label: string; value: BookingFilter; icon: string }[] = [
+  { label: "Upcoming", value: "upcoming", icon: "i-lucide-calendar-clock" },
+  { label: "Past", value: "past", icon: "i-lucide-history" },
+]
+
+const cancelTarget = ref<Booking | null>(null)
+const cancelling = ref(false)
+const isCancelModalOpen = ref(false)
+
+const cancelDescription = computed(() => {
+  const target = cancelTarget.value
+  if (!target) return ""
+  return `This will cancel "${target.eventTitle}" and notify ${target.guestEmail}.`
+})
+
+const statusMeta: Record<BookingStatusKind, { label: string; color: "success" | "neutral" | "error"; testid: string }> = {
+  confirmed: { label: "Confirmed", color: "success", testid: "booking-status-confirmed" },
+  completed: { label: "Completed", color: "neutral", testid: "booking-status-completed" },
+  cancelled: { label: "Cancelled", color: "error", testid: "booking-status-cancelled" },
+}
 
 async function load() {
   loading.value = true
@@ -27,13 +54,30 @@ async function load() {
   }
 }
 
-async function handleCancel(id: string) {
-  if (!confirm("Cancel this booking? This will notify the guest.")) return
+function onTabChange(value: string | number) {
+  if (value === "upcoming" || value === "past") {
+    filter.value = value
+  }
+}
+
+function openCancelModal(booking: Booking) {
+  cancelTarget.value = booking
+  isCancelModalOpen.value = true
+}
+
+async function confirmCancel() {
+  const target = cancelTarget.value
+  if (!target || cancelling.value) return
+  cancelling.value = true
   try {
-    await cancelBooking(id)
+    await cancelBooking(target.id)
     await load()
   } catch (e) {
     generalError.value = e instanceof Error ? e.message : "Failed to cancel booking"
+  } finally {
+    cancelling.value = false
+    isCancelModalOpen.value = false
+    cancelTarget.value = null
   }
 }
 
@@ -47,87 +91,152 @@ function formatDate(iso: string): string {
   })
 }
 
+function statusKind(b: Booking): BookingStatusKind {
+  if (b.status === "CANCELLED") return "cancelled"
+  return new Date(b.endTime).getTime() < Date.now() ? "completed" : "confirmed"
+}
+
 watch(filter, () => load())
 
 await load()
 </script>
 
 <template>
-  <div class="page">
-    <div class="header">
-      <h1 data-testid="page-heading">Dashboard</h1>
-    </div>
-    <p v-if="me" class="welcome">Welcome, {{ me.email }}</p>
+  <div class="mx-auto max-w-4xl px-6 py-8">
+    <header class="mb-6">
+      <h1 class="text-2xl font-bold text-highlighted" data-testid="page-heading">Dashboard</h1>
+      <p v-if="me" class="mt-1 text-sm text-muted">Welcome, {{ me.email }}</p>
+    </header>
 
-    <div class="tabs">
-      <button
-        type="button"
-        class="tab"
-        :class="{ active: filter === 'upcoming' }"
-        @click="filter = 'upcoming'"
-      >
-        Upcoming
-      </button>
-      <button
-        type="button"
-        class="tab"
-        :class="{ active: filter === 'past' }"
-        @click="filter = 'past'"
-      >
-        Past
-      </button>
-    </div>
+    <UTabs
+      :model-value="filter"
+      :items="tabItems"
+      :content="false"
+      class="mb-6"
+      data-testid="dashboard-tabs"
+      @update:model-value="onTabChange"
+    />
 
-    <p v-if="generalError" class="error">{{ generalError }}</p>
-    <div v-if="loading" class="loading">Loading...</div>
+    <p
+      v-if="generalError"
+      class="mb-4 text-sm text-error"
+      role="alert"
+      data-testid="dashboard-error"
+    >
+      {{ generalError }}
+    </p>
 
-    <div v-else-if="bookings.length === 0" class="empty">
-      <p v-if="filter === 'upcoming'">No upcoming bookings.</p>
-      <p v-else>No past bookings.</p>
-    </div>
-
-    <div v-else class="list">
-      <div v-for="b in bookings" :key="b.id" class="card">
-        <div class="card-body">
-          <h3>{{ b.eventTitle }}</h3>
-          <div class="meta">
-            <span>{{ b.guestName }}</span>
-            <span class="email">{{ b.guestEmail }}</span>
+    <div v-if="loading" class="flex flex-col gap-4" data-testid="dashboard-loading">
+      <UCard v-for="i in 3" :key="i">
+        <div class="flex items-center justify-between gap-4">
+          <div class="flex-1 space-y-2">
+            <USkeleton class="h-5 w-2/5" />
+            <USkeleton class="h-4 w-3/5" />
+            <USkeleton class="h-4 w-1/3" />
           </div>
-          <p class="date">{{ formatDate(b.startTime) }}</p>
-          <p v-if="b.notes" class="notes">{{ b.notes }}</p>
-          <span v-if="b.status === 'CANCELLED'" class="badge cancelled" data-testid="booking-status-cancelled">Cancelled</span>
+          <USkeleton class="h-8 w-20" />
         </div>
-        <div v-if="b.status === 'CONFIRMED'" class="card-actions">
-          <button type="button" class="btn-cancel" data-testid="cancel-booking" @click="handleCancel(b.id)">Cancel</button>
-        </div>
-      </div>
+      </UCard>
     </div>
+
+    <UCard v-else-if="bookings.length === 0" data-testid="dashboard-empty">
+      <div class="flex flex-col items-center gap-3 py-8 text-center">
+        <UIcon
+          :name="filter === 'upcoming' ? 'i-lucide-calendar-clock' : 'i-lucide-history'"
+          class="size-10 text-muted"
+        />
+        <div>
+          <p class="font-medium text-highlighted">
+            {{ filter === "upcoming" ? "No upcoming bookings" : "No past bookings" }}
+          </p>
+          <p class="mt-1 text-sm text-muted">
+            {{ filter === "upcoming"
+              ? "Create an event type so people can book you."
+              : "Your past meetings will appear here." }}
+          </p>
+        </div>
+        <UButton
+          v-if="filter === 'upcoming'"
+          to="/event-types/create"
+          icon="i-lucide-plus"
+          label="Create event type"
+          color="primary"
+          data-testid="dashboard-empty-cta"
+        />
+      </div>
+    </UCard>
+
+    <div v-else class="flex flex-col gap-4" data-testid="dashboard-bookings">
+      <UCard
+        v-for="b in bookings"
+        :key="b.id"
+        :ui="{ body: 'flex items-start justify-between gap-4' }"
+      >
+        <div class="flex-1">
+          <div class="mb-1 flex flex-wrap items-center gap-2">
+            <h3 class="text-base font-semibold text-highlighted">{{ b.eventTitle }}</h3>
+            <UBadge
+              :color="statusMeta[statusKind(b)].color"
+              variant="subtle"
+              size="sm"
+              :data-testid="statusMeta[statusKind(b)].testid"
+            >
+              {{ statusMeta[statusKind(b)].label }}
+            </UBadge>
+          </div>
+          <div class="mb-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted">
+            <span class="inline-flex items-center gap-1">
+              <UIcon name="i-lucide-user" class="size-4" />
+              {{ b.guestName }}
+            </span>
+            <span class="inline-flex items-center gap-1">
+              <UIcon name="i-lucide-mail" class="size-4" />
+              {{ b.guestEmail }}
+            </span>
+          </div>
+          <p class="inline-flex items-center gap-1 text-sm text-default">
+            <UIcon name="i-lucide-calendar" class="size-4 text-muted" />
+            {{ formatDate(b.startTime) }}
+          </p>
+          <p v-if="b.notes" class="mt-2 text-sm italic text-muted">{{ b.notes }}</p>
+        </div>
+        <div v-if="statusKind(b) === 'confirmed'" class="shrink-0">
+          <UButton
+            icon="i-lucide-x"
+            label="Cancel"
+            color="error"
+            variant="outline"
+            data-testid="cancel-booking"
+            @click="openCancelModal(b)"
+          />
+        </div>
+      </UCard>
+    </div>
+
+    <UModal
+      v-model:open="isCancelModalOpen"
+      title="Cancel booking?"
+      :description="cancelDescription"
+      data-testid="cancel-booking-modal"
+    >
+      <template #footer="{ close }">
+        <div class="flex w-full justify-end gap-2">
+          <UButton
+            label="Keep booking"
+            color="neutral"
+            variant="ghost"
+            data-testid="cancel-booking-keep"
+            @click="close"
+          />
+          <UButton
+            label="Cancel booking"
+            color="error"
+            :loading="cancelling"
+            data-testid="confirm-cancel-booking"
+            @click="confirmCancel"
+          />
+        </div>
+      </template>
+    </UModal>
   </div>
 </template>
-
-<style scoped>
-.page { max-width: 800px; margin: 0 auto; padding: 2rem 1rem; }
-.header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
-.header h1 { margin: 0; }
-.welcome { color: #666; margin: 0 0 1.5rem; }
-.tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; }
-.tab { background: none; border: 1px solid #ddd; padding: 0.4rem 1.25rem; border-radius: 6px; cursor: pointer; font-size: 0.9rem; color: #666; }
-.tab.active { background: #0070f3; color: #fff; border-color: #0070f3; }
-.loading { text-align: center; color: #666; padding: 2rem; }
-.error { color: #cc0000; margin-bottom: 1rem; }
-.empty { text-align: center; color: #888; padding: 3rem 0; }
-.list { display: flex; flex-direction: column; gap: 1rem; }
-.card { border: 1px solid #e0e0e0; border-radius: 8px; padding: 1.25rem; display: flex; justify-content: space-between; align-items: flex-start; }
-.card-body { flex: 1; }
-.card-body h3 { margin: 0 0 0.25rem; }
-.meta { display: flex; gap: 1rem; color: #777; font-size: 0.85rem; margin: 0.25rem 0; }
-.email { color: #999; }
-.date { color: #333; font-size: 0.9rem; margin: 0.25rem 0; }
-.notes { color: #666; font-size: 0.85rem; font-style: italic; margin: 0.25rem 0; }
-.badge { display: inline-block; padding: 0.15rem 0.6rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
-.badge.cancelled { background: #fee; color: #c00; }
-.card-actions { display: flex; gap: 0.5rem; flex-shrink: 0; margin-left: 1rem; }
-.btn-cancel { background: none; color: #cc0000; border: 1px solid #cc0000; padding: 0.35rem 0.75rem; border-radius: 4px; cursor: pointer; font-size: 0.85rem; }
-.btn-cancel:hover { background: #cc0000; color: #fff; }
-</style>
