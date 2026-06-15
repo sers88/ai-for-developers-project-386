@@ -11,13 +11,12 @@ const { schema, state, isSubmitting, generalError } = useEventTypeForm()
 
 await loadSchedules()
 
-const scheduleOptions = computed(() => [
-  { label: "None", value: "" },
-  ...schedules.value.map((s) => ({
+const scheduleOptions = computed(() =>
+  schedules.value.map((s) => ({
     label: `${s.name} (${s.timezone})`,
     value: s.id,
   })),
-])
+)
 
 function titleToSlug(title: string): string {
   return title
