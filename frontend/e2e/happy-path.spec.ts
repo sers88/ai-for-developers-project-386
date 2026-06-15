@@ -65,7 +65,7 @@ test.describe("Happy path: register → schedule → event type → book → can
 
     // Wait for schedules to load, then select first one via USelect dropdown
     await page.getByTestId("schedule-select").click()
-    const scheduleOption = page.getByRole("option").nth(1)
+    const scheduleOption = page.getByRole("option").first()
     await scheduleOption.waitFor({ state: "visible", timeout: 10_000 })
     await scheduleOption.click()
 

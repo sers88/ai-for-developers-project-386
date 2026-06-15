@@ -24,13 +24,12 @@ const eventType = ref<EventType | null>(null)
 const deleteModalOpen = ref(false)
 const deleting = ref(false)
 
-const scheduleOptions = computed(() => [
-  { label: "None", value: "" },
-  ...schedules.value.map((s) => ({
+const scheduleOptions = computed(() =>
+  schedules.value.map((s) => ({
     label: `${s.name} (${s.timezone})`,
     value: s.id,
   })),
-])
+)
 
 async function load() {
   loading.value = true
