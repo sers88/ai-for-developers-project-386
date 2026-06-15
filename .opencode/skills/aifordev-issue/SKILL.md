@@ -27,7 +27,7 @@ Examples:
 - Label `design-first` → `design-first-23-schedules-spec`
 - Label `feature` → `feature-google-oauth`
 - Label `bug` → `bug-42-fix-login-redirect`
-- If only workflow labels exist, derive prefix from the issue title or parent PRD tag.
+- If only workflow workflow labels exist, derive prefix from the issue title or parent PRD tag.
 
 Branch template: `{feature-label-lowercase}-{issue-number}-{short-slug}`
 
