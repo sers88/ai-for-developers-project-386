@@ -1,135 +1,171 @@
 <script setup lang="ts">
 definePageMeta({
+  layout: "default",
   middleware: ["auth"],
 })
 
 const router = useRouter()
 const { createEventType } = useEventTypes()
 const { load: loadSchedules, schedules, loading: schedulesLoading } = useSchedulesForSelect()
-const { errors, isSubmitting, generalError, handleSubmit, title, description, duration, scheduleId, bufferBefore, bufferAfter } = useEventTypeForm()
+const { schema, state, isSubmitting, generalError } = useEventTypeForm()
 
 await loadSchedules()
 
-const submit = handleSubmit(async (values) => {
+const scheduleItems = computed(() => [
+  { label: "None", value: "" },
+  ...schedules.value.map((s) => ({
+    label: `${s.name} (${s.timezone})`,
+    value: s.id,
+  })),
+])
+
+function titleToSlug(title: string): string {
+  return title
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+}
+
+const slugPreview = computed(() => titleToSlug(state.title))
+
+const bookingPreview = computed(() => {
+  if (!slugPreview.value) return ""
+  const config = useRuntimeConfig()
+  return `${config.public.apiBase}/${slugPreview.value}`
+})
+
+async function onSubmit() {
   generalError.value = null
   try {
     await createEventType({
-      title: values.title,
-      description: values.description || undefined,
-      duration: values.duration,
-      scheduleId: values.scheduleId || undefined,
-      bufferBefore: values.bufferBefore,
-      bufferAfter: values.bufferAfter,
+      title: state.title,
+      description: state.description || undefined,
+      duration: state.duration,
+      scheduleId: state.scheduleId || undefined,
+      bufferBefore: state.bufferBefore,
+      bufferAfter: state.bufferAfter,
     })
     router.push("/event-types")
   } catch (e) {
     generalError.value = e instanceof Error ? e.message : "Failed to create event type"
   }
-})
+}
 </script>
 
 <template>
-  <div class="page">
-    <h1 data-testid="page-heading">New Event Type</h1>
+  <div class="mx-auto max-w-2xl px-6 py-8">
+    <header class="mb-6">
+      <h1 class="text-2xl font-bold text-highlighted" data-testid="page-heading">New Event Type</h1>
+      <p class="mt-1 text-sm text-muted">Create a new bookable event type.</p>
+    </header>
 
-    <form @submit.prevent="submit">
-      <div class="field">
-        <label for="title">Title</label>
-        <input
-          id="title"
-          v-model="title"
-          name="title"
-          type="text"
-          placeholder="e.g. Consultation"
-          data-testid="event-title"
-        >
-        <p v-if="errors.title" class="field-error">{{ errors.title }}</p>
-      </div>
+    <UForm :schema="schema" :state="state" class="flex flex-col gap-5" @submit="onSubmit">
+      <UCard>
+        <div class="flex flex-col gap-4">
+          <UFormField label="Title" name="title" required>
+            <UInput
+              v-model="state.title"
+              placeholder="e.g. Consultation"
+              icon="i-lucide-type"
+              data-testid="event-title"
+            />
+          </UFormField>
 
-      <div class="field">
-        <label for="description">Description</label>
-        <input
-          id="description"
-          v-model="description"
-          name="description"
-          type="text"
-          placeholder="Optional description"
-        >
-      </div>
+          <UFormField label="Description" name="description">
+            <UInput
+              v-model="state.description"
+              placeholder="Optional description"
+              icon="i-lucide-align-left"
+            />
+          </UFormField>
 
-      <div class="field">
-        <label for="duration">Duration (minutes)</label>
-        <input
-          id="duration"
-          v-model.number="duration"
-          name="duration"
-          type="number"
-          min="5"
-          data-testid="event-duration"
-        >
-        <p v-if="errors.duration" class="field-error">{{ errors.duration }}</p>
-      </div>
-
-      <div class="field">
-        <label for="scheduleId">Schedule</label>
-        <select id="scheduleId" v-model="scheduleId" name="scheduleId" :disabled="schedulesLoading" data-testid="schedule-select">
-          <option value="">None</option>
-          <option v-for="s in schedules" :key="s.id" :value="s.id">
-            {{ s.name }} ({{ s.timezone }})
-          </option>
-        </select>
-      </div>
-
-      <div class="field-row">
-        <div class="field">
-          <label for="bufferBefore">Buffer Before (min)</label>
-          <input
-            id="bufferBefore"
-            v-model.number="bufferBefore"
-            name="bufferBefore"
-            type="number"
-            min="0"
-          >
-          <p v-if="errors.bufferBefore" class="field-error">{{ errors.bufferBefore }}</p>
+          <UFormField label="Duration (minutes)" name="duration" required>
+            <UInput
+              v-model.number="state.duration"
+              type="number"
+              min="5"
+              placeholder="30"
+              icon="i-lucide-clock"
+              data-testid="event-duration"
+            />
+          </UFormField>
         </div>
-        <div class="field">
-          <label for="bufferAfter">Buffer After (min)</label>
-          <input
-            id="bufferAfter"
-            v-model.number="bufferAfter"
-            name="bufferAfter"
-            type="number"
-            min="0"
-          >
-          <p v-if="errors.bufferAfter" class="field-error">{{ errors.bufferAfter }}</p>
+      </UCard>
+
+      <UCard>
+        <div class="flex flex-col gap-4">
+          <UFormField label="Schedule" name="scheduleId">
+            <USelect
+              v-model="state.scheduleId"
+              :items="scheduleItems"
+              :disabled="schedulesLoading"
+              placeholder="Select a schedule"
+              icon="i-lucide-calendar"
+              data-testid="schedule-select"
+              class="w-full"
+            />
+          </UFormField>
+
+          <div class="grid grid-cols-2 gap-4">
+            <UFormField label="Buffer Before (min)" name="bufferBefore">
+              <UInput
+                v-model.number="state.bufferBefore"
+                type="number"
+                min="0"
+                placeholder="0"
+                icon="i-lucide-arrow-up-from-line"
+              />
+            </UFormField>
+            <UFormField label="Buffer After (min)" name="bufferAfter">
+              <UInput
+                v-model.number="state.bufferAfter"
+                type="number"
+                min="0"
+                placeholder="0"
+                icon="i-lucide-arrow-down-to-line"
+              />
+            </UFormField>
+          </div>
         </div>
-      </div>
+      </UCard>
 
-      <p v-if="generalError" class="error">{{ generalError }}</p>
+      <UCard v-if="bookingPreview" data-testid="booking-preview">
+        <div class="flex items-center gap-3">
+          <UIcon name="i-lucide-link" class="size-5 shrink-0 text-muted" />
+          <div class="min-w-0">
+            <p class="text-xs font-medium text-muted">Booking link preview</p>
+            <code class="block truncate text-sm text-default">{{ bookingPreview }}</code>
+          </div>
+        </div>
+      </UCard>
 
-      <div class="actions">
-        <NuxtLink to="/event-types" class="btn-cancel">Cancel</NuxtLink>
-        <button type="submit" class="btn-save" :disabled="isSubmitting" data-testid="event-create-submit">
+      <p
+        v-if="generalError"
+        class="rounded-md bg-error/10 px-3 py-2 text-sm text-error"
+        role="alert"
+        data-testid="general-error"
+      >
+        {{ generalError }}
+      </p>
+
+      <div class="flex justify-end gap-3">
+        <UButton
+          to="/event-types"
+          color="neutral"
+          variant="ghost"
+        >
+          Cancel
+        </UButton>
+        <UButton
+          type="submit"
+          :loading="isSubmitting"
+          icon="i-lucide-plus"
+          data-testid="event-create-submit"
+        >
           {{ isSubmitting ? "Creating..." : "Create" }}
-        </button>
+        </UButton>
       </div>
-    </form>
+    </UForm>
   </div>
 </template>
-
-<style scoped>
-.page { max-width: 560px; margin: 0 auto; padding: 2rem 1rem; }
-h1 { margin-bottom: 1.5rem; }
-.field { margin-bottom: 1rem; }
-.field label { display: block; font-weight: 600; margin-bottom: 0.25rem; font-size: 0.9rem; }
-.field input, .field select { width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px; font-size: 0.95rem; box-sizing: border-box; }
-.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-.field-error { color: #cc0000; font-size: 0.8rem; margin: 0.25rem 0 0; }
-.error { color: #cc0000; margin: 1rem 0; }
-.actions { display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem; }
-.btn-cancel { color: #555; text-decoration: none; padding: 0.5rem 1rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; }
-.btn-cancel:hover { background: #f5f5f5; }
-.btn-save { background: #0070f3; color: #fff; border: none; padding: 0.5rem 1.5rem; border-radius: 6px; font-size: 0.95rem; cursor: pointer; }
-.btn-save:hover:not(:disabled) { background: #0051cc; }
-.btn-save:disabled { opacity: 0.5; cursor: not-allowed; }
-</style>
