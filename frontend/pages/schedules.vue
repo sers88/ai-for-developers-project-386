@@ -1,161 +1,150 @@
 <script setup lang="ts">
+import { z } from "zod"
+
 definePageMeta({
+  layout: "default",
   middleware: ["auth"],
 })
 
-const { days, slots, loading, saving, generalError, load, addSlot, removeSlot, save } =
-  useScheduleForm()
+const {
+  days,
+  slots,
+  timezone,
+  loading,
+  saving,
+  generalError,
+  load,
+  addSlot,
+  removeSlot,
+  save,
+} = useScheduleForm()
+
+const schema = z.object({
+  timezone: z.string().min(1, "Timezone is required"),
+})
+
+const state = reactive({ timezone: "" })
+
+watchEffect(() => {
+  state.timezone = timezone.value
+})
+
+function onSave() {
+  timezone.value = state.timezone
+  void save()
+}
+
+const timezones = Intl.supportedValuesOf("timeZone")
 
 await load()
 </script>
 
 <template>
-  <div class="page">
-    <h1 data-testid="page-heading">Schedule Settings</h1>
+  <div class="mx-auto max-w-3xl px-6 py-8">
+    <header class="mb-6">
+      <h1 class="text-2xl font-bold text-highlighted" data-testid="page-heading">Schedule Settings</h1>
+      <p class="mt-1 text-sm text-muted">Set your availability for each day of the week.</p>
+    </header>
 
-    <div v-if="loading" class="loading">Loading...</div>
+    <div v-if="loading" class="flex flex-col gap-4" data-testid="schedule-loading">
+      <UCard v-for="i in 3" :key="i">
+        <div class="space-y-3">
+          <USkeleton class="h-5 w-1/4" />
+          <USkeleton class="h-10 w-full" />
+          <USkeleton class="h-10 w-full" />
+        </div>
+      </UCard>
+    </div>
 
-    <div v-else class="schedule-grid">
-      <div v-for="day in days" :key="day.value" class="day-row" data-testid="schedule-day-row">
-        <div class="day-label">{{ day.label }}</div>
-        <div class="day-slots">
-          <div v-for="(slot, index) in slots[day.value]" :key="index" class="slot">
-            <input
+    <UForm v-else :schema="schema" :state="state" class="flex flex-col gap-6" @submit="onSave">
+      <UCard>
+        <template #header>
+          <span class="font-semibold text-highlighted">Timezone</span>
+        </template>
+        <UFormField label="Your timezone" name="timezone" hint="Slots are interpreted in this timezone">
+          <USelectMenu
+            v-model="state.timezone"
+            :items="timezones"
+            searchable
+            searchable-placeholder="Search timezone..."
+            placeholder="Select timezone"
+            icon="i-lucide-globe"
+            data-testid="schedule-timezone"
+            class="w-full"
+          />
+        </UFormField>
+      </UCard>
+
+      <UCard
+        v-for="day in days"
+        :key="day.value"
+        data-testid="schedule-day-row"
+      >
+        <template #header>
+          <span class="font-semibold text-highlighted">{{ day.label }}</span>
+        </template>
+        <div class="flex flex-col gap-3">
+          <div
+            v-for="(slot, index) in slots[day.value]"
+            :key="index"
+            class="flex items-center gap-2"
+          >
+            <UInput
               v-model="slot.startTime"
               type="time"
-              class="time-input"
-            >
-            <span class="slot-separator">to</span>
-            <input
+              icon="i-lucide-clock"
+              class="w-36"
+            />
+            <span class="text-sm text-muted">to</span>
+            <UInput
               v-model="slot.endTime"
               type="time"
-              class="time-input"
-            >
-            <button
-              class="btn-remove"
+              class="w-36"
+            />
+            <UButton
+              icon="i-lucide-x"
+              color="error"
+              variant="ghost"
+              size="sm"
               :disabled="slots[day.value].length <= 1"
+              aria-label="Remove slot"
+              data-testid="schedule-remove-slot"
               @click="removeSlot(day.value, index)"
-            >
-              &times;
-            </button>
+            />
           </div>
-          <button class="btn-add" @click="addSlot(day.value)">+ Add time</button>
+          <UButton
+            icon="i-lucide-plus"
+            label="Add time"
+            color="neutral"
+            variant="outline"
+            size="sm"
+            class="w-fit"
+            data-testid="schedule-add-slot"
+            @click="addSlot(day.value)"
+          />
         </div>
+      </UCard>
+
+      <p
+        v-if="generalError"
+        class="rounded-md bg-error/10 px-3 py-2 text-sm text-error"
+        role="alert"
+        data-testid="schedule-error"
+      >
+        {{ generalError }}
+      </p>
+
+      <div class="flex justify-end">
+        <UButton
+          type="submit"
+          :loading="saving"
+          :disabled="loading"
+          icon="i-lucide-save"
+          data-testid="schedule-save"
+        >
+          {{ saving ? "Saving..." : "Save" }}
+        </UButton>
       </div>
-    </div>
-
-    <p v-if="generalError" class="error">{{ generalError }}</p>
-
-    <div class="actions">
-      <button class="btn-save" :disabled="saving || loading" data-testid="schedule-save" @click="save">
-        {{ saving ? "Saving..." : "Save" }}
-      </button>
-    </div>
+    </UForm>
   </div>
 </template>
-
-<style scoped>
-.page {
-  max-width: 680px;
-  margin: 0 auto;
-  padding: 2rem 1rem;
-}
-h1 {
-  margin-bottom: 1.5rem;
-}
-.loading {
-  text-align: center;
-  color: #666;
-  padding: 2rem;
-}
-.schedule-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-.day-row {
-  display: grid;
-  grid-template-columns: 100px 1fr;
-  align-items: start;
-  gap: 0.75rem;
-  padding: 0.5rem 0;
-  border-bottom: 1px solid #eee;
-}
-.day-label {
-  font-weight: 600;
-  padding-top: 0.25rem;
-}
-.day-slots {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-.slot {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-.time-input {
-  width: 7rem;
-  padding: 0.25rem 0.5rem;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  font-size: 0.9rem;
-}
-.slot-separator {
-  color: #888;
-  font-size: 0.85rem;
-}
-.btn-remove {
-  background: none;
-  border: none;
-  color: #cc0000;
-  font-size: 1.2rem;
-  cursor: pointer;
-  padding: 0 0.25rem;
-  line-height: 1;
-}
-.btn-remove:disabled {
-  color: #ccc;
-  cursor: not-allowed;
-}
-.btn-add {
-  background: none;
-  border: 1px dashed #aaa;
-  color: #555;
-  padding: 0.35rem 0.75rem;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.85rem;
-  width: fit-content;
-}
-.btn-add:hover {
-  border-color: #333;
-  color: #111;
-}
-.actions {
-  margin-top: 2rem;
-  display: flex;
-  justify-content: flex-end;
-}
-.btn-save {
-  background: #0070f3;
-  color: #fff;
-  border: none;
-  padding: 0.5rem 1.5rem;
-  border-radius: 6px;
-  font-size: 1rem;
-  cursor: pointer;
-}
-.btn-save:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-.btn-save:not(:disabled):hover {
-  background: #0051cc;
-}
-.error {
-  color: #cc0000;
-  margin-top: 1rem;
-}
-</style>

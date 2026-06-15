@@ -13,7 +13,8 @@ const DAYS = [
 ] as const
 
 type DayOfWeek = (typeof DAYS)[number]["value"]
-type SlotsByDay = Record<DayOfWeek, { startTime: string; endTime: string }[]>
+type Slot = { startTime: string; endTime: string }
+type SlotsByDay = Record<DayOfWeek, Slot[]>
 
 function minutes(time: string): number {
   const [h, m] = time.split(":").map(Number)
@@ -25,35 +26,32 @@ function formatTime(value: string): string {
   return `${(parts[0] ?? "0").padStart(2, "0")}:${(parts[1] ?? "0").padStart(2, "0")}`
 }
 
+function browserTimezone(): string {
+  try {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone
+    return tz && tz.length > 0 ? tz : "UTC"
+  } catch {
+    return "UTC"
+  }
+}
+
+function emptySlots(): SlotsByDay {
+  return { MON: [], TUE: [], WED: [], THU: [], FRI: [], SAT: [], SUN: [] }
+}
+
 export function useScheduleForm() {
   const generalError = ref<string | null>(null)
   const { loadSchedules, updateSchedule } = useSchedules()
 
   const scheduleId = ref<string | null>(null)
-  const timezone = ref("UTC")
+  const timezone = ref(browserTimezone())
   const loading = ref(true)
   const saving = ref(false)
 
-  const slots = ref<SlotsByDay>({
-    MON: [],
-    TUE: [],
-    WED: [],
-    THU: [],
-    FRI: [],
-    SAT: [],
-    SUN: [],
-  })
+  const slots = ref<SlotsByDay>(emptySlots())
 
   function initFromAvailabilities(availabilities: AvailabilitySlot[]) {
-    const byDay: SlotsByDay = {
-      MON: [],
-      TUE: [],
-      WED: [],
-      THU: [],
-      FRI: [],
-      SAT: [],
-      SUN: [],
-    }
+    const byDay = emptySlots()
     for (const a of availabilities) {
       if (a.dayOfWeek in byDay) {
         byDay[a.dayOfWeek as DayOfWeek].push({
@@ -103,7 +101,11 @@ export function useScheduleForm() {
     saving.value = true
     generalError.value = null
     try {
-      const availabilities: { dayOfWeek: "MON" | "TUE" | "WED" | "THU" | "FRI" | "SAT" | "SUN"; startTime: string; endTime: string }[] = []
+      const availabilities: {
+        dayOfWeek: "MON" | "TUE" | "WED" | "THU" | "FRI" | "SAT" | "SUN"
+        startTime: string
+        endTime: string
+      }[] = []
       for (const day of DAYS) {
         const sorted = [...slots.value[day.value]].sort(
           (a, b) => minutes(formatTime(a.startTime)) - minutes(formatTime(b.startTime)),
@@ -116,7 +118,10 @@ export function useScheduleForm() {
           })
         }
       }
-      await updateSchedule(scheduleId.value, { availabilities })
+      await updateSchedule(scheduleId.value, {
+        timezone: timezone.value,
+        availabilities,
+      })
     } catch (e) {
       generalError.value = e instanceof Error ? e.message : "Failed to save"
     } finally {
@@ -124,5 +129,17 @@ export function useScheduleForm() {
     }
   }
 
-  return { days: DAYS, slots, scheduleId, timezone, loading, saving, generalError, load, addSlot, removeSlot, save }
+  return {
+    days: DAYS,
+    slots,
+    scheduleId,
+    timezone,
+    loading,
+    saving,
+    generalError,
+    load,
+    addSlot,
+    removeSlot,
+    save,
+  }
 }
