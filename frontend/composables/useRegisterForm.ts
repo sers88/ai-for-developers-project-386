@@ -1,33 +1,28 @@
-import { useForm } from "vee-validate"
-import { toTypedSchema } from "@vee-validate/zod"
 import { z } from "zod"
 
-const schema = toTypedSchema(
-  z.object({
-    email: z.string().min(1, "Email is required").email("Invalid email format"),
-    password: z.string().min(6, "Password must be at least 6 characters"),
-  }),
-)
+const schema = z.object({
+  email: z.string().min(1, "Email is required").email("Invalid email format"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+})
 
 export function useRegisterForm() {
   const generalError = ref<string | null>(null)
-  const { handleSubmit, errors, isSubmitting, defineField } = useForm({
-    validationSchema: schema,
-  })
+  const isSubmitting = ref(false)
+  const state = reactive({ email: "", password: "" })
 
-  const [email] = defineField("email")
-  const [password] = defineField("password")
-
-  const submit = handleSubmit(async (values) => {
+  async function onSubmit() {
     generalError.value = null
+    isSubmitting.value = true
     try {
-      await useAuth().register(values)
+      await useAuth().register({ email: state.email, password: state.password })
       await navigateTo("/dashboard")
     } catch (e) {
       const err = e as { data?: { message?: string } }
       generalError.value = err?.data?.message || "Registration failed"
+    } finally {
+      isSubmitting.value = false
     }
-  })
+  }
 
-  return { submit, errors, isSubmitting, generalError, email, password }
+  return { schema, state, onSubmit, isSubmitting, generalError }
 }
