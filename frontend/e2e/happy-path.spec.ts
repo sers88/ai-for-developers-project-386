@@ -32,8 +32,6 @@ test.describe("Happy path: register → schedule → event type → book → can
   test("full user journey", async ({ page }) => {
     test.setTimeout(120_000)
 
-    page.on("dialog", (dialog) => dialog.accept())
-
     const email = uniqueEmail()
 
     // ── 1. Register ──────────────────────────────────────────────
@@ -129,6 +127,9 @@ test.describe("Happy path: register → schedule → event type → book → can
 
     await expect(page.getByTestId("cancel-booking").first()).toBeVisible({ timeout: 10_000 })
     await page.getByTestId("cancel-booking").first().click()
+
+    await expect(page.getByTestId("confirm-cancel-booking")).toBeVisible({ timeout: 10_000 })
+    await page.getByTestId("confirm-cancel-booking").click()
 
     await expect(page.getByTestId("booking-status-cancelled").first()).toBeVisible({ timeout: 10_000 })
   })
