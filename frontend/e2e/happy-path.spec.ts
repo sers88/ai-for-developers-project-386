@@ -63,15 +63,11 @@ test.describe("Happy path: register → schedule → event type → book → can
     await page.getByTestId("event-title").fill("E2E Consultation")
     await page.getByTestId("event-duration").fill("30")
 
-    // Wait for schedules to load in dropdown, then select first one
-    await page.waitForFunction(
-      () => {
-        const sel = document.querySelector('[data-testid="schedule-select"]')
-        return sel !== null && sel.querySelectorAll("option").length > 1
-      },
-      { timeout: 10_000 },
-    )
-    await page.getByTestId("schedule-select").selectOption({ index: 1 })
+    // Wait for schedules to load, then select first one via USelect dropdown
+    await page.getByTestId("schedule-select").click()
+    const scheduleOption = page.getByRole("option").nth(1)
+    await scheduleOption.waitFor({ state: "visible", timeout: 10_000 })
+    await scheduleOption.click()
 
     await page.getByTestId("event-create-submit").click()
     await expect(page).toHaveURL(/\/event-types$/, { timeout: 15_000 })

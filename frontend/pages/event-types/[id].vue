@@ -24,7 +24,7 @@ const eventType = ref<EventType | null>(null)
 const deleteModalOpen = ref(false)
 const deleting = ref(false)
 
-const scheduleItems = computed(() => [
+const scheduleOptions = computed(() => [
   { label: "None", value: "" },
   ...schedules.value.map((s) => ({
     label: `${s.name} (${s.timezone})`,
@@ -228,75 +228,61 @@ async function onSubmit() {
           </h1>
         </header>
 
-        <UForm :schema="schema" :state="state" class="flex flex-col gap-5" @submit="onSubmit">
-          <UCard>
-            <div class="flex flex-col gap-4">
-              <UFormField label="Title" name="title" required>
-                <UInput
-                  v-model="state.title"
-                  placeholder="e.g. Consultation"
-                  icon="i-lucide-type"
-                  data-testid="event-title"
-                />
-              </UFormField>
+        <UForm :schema="schema" :state="state" class="flex flex-col gap-4" @submit="onSubmit">
+          <UFormField label="Title" name="title">
+            <UInput
+              v-model="state.title"
+              placeholder="e.g. Consultation"
+              data-testid="event-title"
+            />
+          </UFormField>
 
-              <UFormField label="Description" name="description">
-                <UInput
-                  v-model="state.description"
-                  placeholder="Optional description"
-                  icon="i-lucide-align-left"
-                />
-              </UFormField>
+          <UFormField label="Description" name="description">
+            <UInput
+              v-model="state.description"
+              placeholder="Optional description"
+            />
+          </UFormField>
 
-              <UFormField label="Duration (minutes)" name="duration" required>
-                <UInput
-                  v-model.number="state.duration"
-                  type="number"
-                  min="5"
-                  placeholder="30"
-                  icon="i-lucide-clock"
-                  data-testid="event-duration"
-                />
-              </UFormField>
-            </div>
-          </UCard>
+          <UFormField label="Duration (minutes)" name="duration">
+            <UInput
+              v-model.number="state.duration"
+              type="number"
+              min="5"
+              placeholder="30"
+              data-testid="event-duration"
+            />
+          </UFormField>
 
-          <UCard>
-            <div class="flex flex-col gap-4">
-              <UFormField label="Schedule" name="scheduleId">
-                <USelect
-                  v-model="state.scheduleId"
-                  :items="scheduleItems"
-                  :disabled="schedulesLoading"
-                  placeholder="Select a schedule"
-                  icon="i-lucide-calendar"
-                  data-testid="schedule-select"
-                  class="w-full"
-                />
-              </UFormField>
+          <UFormField label="Schedule" name="scheduleId">
+            <USelect
+              v-model="state.scheduleId"
+              :items="scheduleOptions"
+              :disabled="schedulesLoading"
+              placeholder="Select a schedule"
+              data-testid="schedule-select"
+              class="w-full"
+            />
+          </UFormField>
 
-              <div class="grid grid-cols-2 gap-4">
-                <UFormField label="Buffer Before (min)" name="bufferBefore">
-                  <UInput
-                    v-model.number="state.bufferBefore"
-                    type="number"
-                    min="0"
-                    placeholder="0"
-                    icon="i-lucide-arrow-up-from-line"
-                  />
-                </UFormField>
-                <UFormField label="Buffer After (min)" name="bufferAfter">
-                  <UInput
-                    v-model.number="state.bufferAfter"
-                    type="number"
-                    min="0"
-                    placeholder="0"
-                    icon="i-lucide-arrow-down-to-line"
-                  />
-                </UFormField>
-              </div>
-            </div>
-          </UCard>
+          <div class="grid grid-cols-2 gap-4">
+            <UFormField label="Buffer Before (min)" name="bufferBefore">
+              <UInput
+                v-model.number="state.bufferBefore"
+                type="number"
+                min="0"
+                placeholder="0"
+              />
+            </UFormField>
+            <UFormField label="Buffer After (min)" name="bufferAfter">
+              <UInput
+                v-model.number="state.bufferAfter"
+                type="number"
+                min="0"
+                placeholder="0"
+              />
+            </UFormField>
+          </div>
 
           <p
             v-if="generalError"
@@ -319,10 +305,9 @@ async function onSubmit() {
             <UButton
               type="submit"
               :loading="isSubmitting"
-              icon="i-lucide-save"
               data-testid="event-edit-submit"
             >
-              {{ isSubmitting ? "Saving..." : "Save" }}
+              Save
             </UButton>
           </div>
         </UForm>
@@ -332,7 +317,7 @@ async function onSubmit() {
     <UModal
       v-model:open="deleteModalOpen"
       title="Delete event type?"
-      :description="`\u201C${eventType?.title}\u201D will be permanently deleted. This action cannot be undone.`"
+      :description="`${eventType?.title} will be permanently deleted. This action cannot be undone.`"
       data-testid="delete-event-type-modal"
     >
       <template #footer="{ close }">
