@@ -11,7 +11,7 @@ const { schema, state, isSubmitting, generalError } = useEventTypeForm()
 
 await loadSchedules()
 
-const scheduleItems = computed(() => [
+const scheduleOptions = computed(() => [
   { label: "None", value: "" },
   ...schedules.value.map((s) => ({
     label: `${s.name} (${s.timezone})`,
@@ -28,12 +28,6 @@ function titleToSlug(title: string): string {
 }
 
 const slugPreview = computed(() => titleToSlug(state.title))
-
-const bookingPreview = computed(() => {
-  if (!slugPreview.value) return ""
-  const config = useRuntimeConfig()
-  return `${config.public.apiBase}/${slugPreview.value}`
-})
 
 async function onSubmit() {
   generalError.value = null
@@ -60,82 +54,68 @@ async function onSubmit() {
       <p class="mt-1 text-sm text-muted">Create a new bookable event type.</p>
     </header>
 
-    <UForm :schema="schema" :state="state" class="flex flex-col gap-5" @submit="onSubmit">
-      <UCard>
-        <div class="flex flex-col gap-4">
-          <UFormField label="Title" name="title" required>
-            <UInput
-              v-model="state.title"
-              placeholder="e.g. Consultation"
-              icon="i-lucide-type"
-              data-testid="event-title"
-            />
-          </UFormField>
+    <UForm :schema="schema" :state="state" class="flex flex-col gap-4" @submit="onSubmit">
+      <UFormField label="Title" name="title">
+        <UInput
+          v-model="state.title"
+          placeholder="e.g. Consultation"
+          data-testid="event-title"
+        />
+      </UFormField>
 
-          <UFormField label="Description" name="description">
-            <UInput
-              v-model="state.description"
-              placeholder="Optional description"
-              icon="i-lucide-align-left"
-            />
-          </UFormField>
+      <UFormField label="Description" name="description">
+        <UInput
+          v-model="state.description"
+          placeholder="Optional description"
+        />
+      </UFormField>
 
-          <UFormField label="Duration (minutes)" name="duration" required>
-            <UInput
-              v-model.number="state.duration"
-              type="number"
-              min="5"
-              placeholder="30"
-              icon="i-lucide-clock"
-              data-testid="event-duration"
-            />
-          </UFormField>
-        </div>
-      </UCard>
+      <UFormField label="Duration (minutes)" name="duration">
+        <UInput
+          v-model.number="state.duration"
+          type="number"
+          min="5"
+          placeholder="30"
+          data-testid="event-duration"
+        />
+      </UFormField>
 
-      <UCard>
-        <div class="flex flex-col gap-4">
-          <UFormField label="Schedule" name="scheduleId">
-            <USelect
-              v-model="state.scheduleId"
-              :items="scheduleItems"
-              :disabled="schedulesLoading"
-              placeholder="Select a schedule"
-              icon="i-lucide-calendar"
-              data-testid="schedule-select"
-              class="w-full"
-            />
-          </UFormField>
+      <UFormField label="Schedule" name="scheduleId">
+        <USelect
+          v-model="state.scheduleId"
+          :items="scheduleOptions"
+          :disabled="schedulesLoading"
+          placeholder="Select a schedule"
+          data-testid="schedule-select"
+          class="w-full"
+        />
+      </UFormField>
 
-          <div class="grid grid-cols-2 gap-4">
-            <UFormField label="Buffer Before (min)" name="bufferBefore">
-              <UInput
-                v-model.number="state.bufferBefore"
-                type="number"
-                min="0"
-                placeholder="0"
-                icon="i-lucide-arrow-up-from-line"
-              />
-            </UFormField>
-            <UFormField label="Buffer After (min)" name="bufferAfter">
-              <UInput
-                v-model.number="state.bufferAfter"
-                type="number"
-                min="0"
-                placeholder="0"
-                icon="i-lucide-arrow-down-to-line"
-              />
-            </UFormField>
-          </div>
-        </div>
-      </UCard>
+      <div class="grid grid-cols-2 gap-4">
+        <UFormField label="Buffer Before (min)" name="bufferBefore">
+          <UInput
+            v-model.number="state.bufferBefore"
+            type="number"
+            min="0"
+            placeholder="0"
+          />
+        </UFormField>
+        <UFormField label="Buffer After (min)" name="bufferAfter">
+          <UInput
+            v-model.number="state.bufferAfter"
+            type="number"
+            min="0"
+            placeholder="0"
+          />
+        </UFormField>
+      </div>
 
-      <UCard v-if="bookingPreview" data-testid="booking-preview">
+      <UCard v-if="slugPreview" data-testid="booking-preview">
         <div class="flex items-center gap-3">
           <UIcon name="i-lucide-link" class="size-5 shrink-0 text-muted" />
           <div class="min-w-0">
             <p class="text-xs font-medium text-muted">Booking link preview</p>
-            <code class="block truncate text-sm text-default">{{ bookingPreview }}</code>
+            <code class="text-sm text-default">/{{ slugPreview }}</code>
           </div>
         </div>
       </UCard>
@@ -160,10 +140,9 @@ async function onSubmit() {
         <UButton
           type="submit"
           :loading="isSubmitting"
-          icon="i-lucide-plus"
           data-testid="event-create-submit"
         >
-          {{ isSubmitting ? "Creating..." : "Create" }}
+          Create
         </UButton>
       </div>
     </UForm>

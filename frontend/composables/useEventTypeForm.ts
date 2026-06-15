@@ -3,10 +3,10 @@ import { z } from "zod"
 const schema = z.object({
   title: z.string().min(1, "Title is required"),
   description: z.string(),
-  duration: z.coerce.number().min(5, "Duration must be at least 5 minutes"),
+  duration: z.number().min(5, "Duration must be at least 5 minutes"),
   scheduleId: z.string(),
-  bufferBefore: z.coerce.number().min(0, "Buffer must be non-negative"),
-  bufferAfter: z.coerce.number().min(0, "Buffer must be non-negative"),
+  bufferBefore: z.number().min(0, "Buffer must be non-negative"),
+  bufferAfter: z.number().min(0, "Buffer must be non-negative"),
 })
 
 export type EventTypeFormState = z.infer<typeof schema>
