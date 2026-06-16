@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { z } from "zod"
+import { today as getToday, getLocalTimeZone, type CalendarDate, type DateValue } from "@internationalized/date"
+import type { DateRange } from "reka-ui"
 import type { components } from "~/api/generated/schema"
 
 definePageMeta({
@@ -7,98 +10,76 @@ definePageMeta({
 
 const route = useRoute()
 const { getPublicEventType, getAvailability, createBooking } = usePublicBooking()
+const owner = usePublicBookingOwner()
 
 const userId = route.params.userId as string
 const slug = route.params.slug as string
+
+type PublicEventTypeResponse = components["schemas"]["PublicEventTypeResponse"]
+type AvailabilitySlot = components["schemas"]["AvailabilitySlot"]
+type CalendarValue = DateValue | DateRange | DateValue[] | null | undefined
 
 const eventType = ref<PublicEventTypeResponse | null>(null)
 const loadingEvent = ref(true)
 const loadError = ref<string | null>(null)
 
-const selectedDate = ref<string | null>(null)
+const selectedDate = ref<CalendarValue>(undefined)
 const slots = ref<AvailabilitySlot[]>([])
 const loadingSlots = ref(false)
 const selectedSlot = ref<AvailabilitySlot | null>(null)
 
-const guestName = ref("")
-const guestEmail = ref("")
-const guestNotes = ref("")
 const submitting = ref(false)
 const bookingError = ref<string | null>(null)
 
-const today = new Date()
-const currentMonth = ref(new Date(today.getFullYear(), today.getMonth(), 1))
+const selectedTimezone = ref(browserTimezone())
+const timezones = Intl.supportedValuesOf("timeZone")
 
-type PublicEventTypeResponse = components["schemas"]["PublicEventTypeResponse"]
-type AvailabilitySlot = components["schemas"]["AvailabilitySlot"]
+const minValue = getToday(getLocalTimeZone())
+
+const calendarModel = computed<CalendarDate | undefined>(() => {
+  const v = selectedDate.value
+  if (!v || Array.isArray(v) || ("start" in v)) return undefined
+  return v as CalendarDate
+})
+
+const schema = z.object({
+  guestName: z.string().min(1, "Name is required"),
+  guestEmail: z.string().email("Enter a valid email"),
+  guestNotes: z.string().optional(),
+})
+
+const state = reactive({
+  guestName: "",
+  guestEmail: "",
+  guestNotes: "",
+})
 
 try {
   eventType.value = await getPublicEventType(userId, slug)
+  owner.value = eventType.value.ownerName ? { name: eventType.value.ownerName } : null
 } catch (e) {
   loadError.value = e instanceof Error ? e.message : "Event type not found"
 } finally {
   loadingEvent.value = false
 }
 
-const monthDays = computed(() => {
-  const year = currentMonth.value.getFullYear()
-  const month = currentMonth.value.getMonth()
-  const firstDay = new Date(year, month, 1)
-  const lastDay = new Date(year, month + 1, 0)
-  const days: (Date | null)[] = []
-
-  const startOffset = (firstDay.getDay() + 6) % 7
-  for (let i = 0; i < startOffset; i++) days.push(null)
-  for (let d = 1; d <= lastDay.getDate(); d++) {
-    days.push(new Date(year, month, d))
+function asDateValue(value: CalendarValue): DateValue | undefined {
+  if (!value || Array.isArray(value) || ("start" in value && "end" in value)) {
+    return undefined
   }
-  return days
-})
-
-const weekDays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-
-const monthLabel = computed(() =>
-  currentMonth.value.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
-)
-
-function prevMonth() {
-  currentMonth.value = new Date(
-    currentMonth.value.getFullYear(),
-    currentMonth.value.getMonth() - 1,
-    1,
-  )
+  return value as DateValue
 }
 
-function nextMonth() {
-  currentMonth.value = new Date(
-    currentMonth.value.getFullYear(),
-    currentMonth.value.getMonth() + 1,
-    1,
-  )
-}
-
-function isPast(date: Date): boolean {
-  const todayMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate())
-  return date < todayMidnight
-}
-
-function formatDate(date: Date): string {
-  const y = date.getFullYear()
-  const m = String(date.getMonth() + 1).padStart(2, "0")
-  const d = String(date.getDate()).padStart(2, "0")
-  return `${y}-${m}-${d}`
-}
-
-async function selectDate(date: Date) {
-  if (isPast(date)) return
-  selectedDate.value = formatDate(date)
+async function onSelectDate(value: CalendarValue) {
+  selectedDate.value = value
   selectedSlot.value = null
   slots.value = []
+  const date = asDateValue(value)
+  if (!date || !eventType.value) return
   loadingSlots.value = true
+  bookingError.value = null
   try {
-    if (eventType.value) {
-      slots.value = await getAvailability(eventType.value.id, selectedDate.value)
-    }
+    slots.value = await getAvailability(eventType.value.id, date.toString())
   } catch (e) {
     bookingError.value = e instanceof Error ? e.message : "Failed to load slots"
   } finally {
@@ -112,28 +93,22 @@ function selectSlot(slot: AvailabilitySlot) {
 }
 
 function formatSlotTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString("en-US", {
-    hour: "2-digit",
-    minute: "2-digit",
-  })
+  return formatSlotInTimezone(iso, selectedTimezone.value)
 }
 
-async function submitBooking() {
+async function onSubmit() {
   if (!eventType.value || !selectedSlot.value) return
-  if (!guestName.value.trim() || !guestEmail.value.trim()) return
-
   submitting.value = true
   bookingError.value = null
-
   try {
     const booking = await createBooking({
       eventTypeId: eventType.value.id,
-      guestName: guestName.value.trim(),
-      guestEmail: guestEmail.value.trim(),
-      notes: guestNotes.value.trim() || undefined,
+      guestName: state.guestName.trim(),
+      guestEmail: state.guestEmail.trim(),
+      notes: state.guestNotes.trim() || undefined,
       startTime: selectedSlot.value.start,
       endTime: selectedSlot.value.end,
-      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      timezone: selectedTimezone.value,
     })
 
     await navigateTo({
@@ -149,161 +124,153 @@ async function submitBooking() {
 </script>
 
 <template>
-  <div class="booking-page">
-    <div v-if="loadingEvent" class="loading">Loading...</div>
-
-    <div v-else-if="loadError" class="error-block">
-      <h1 data-testid="page-heading">Event Not Found</h1>
-      <p>{{ loadError }}</p>
+  <div class="mx-auto max-w-5xl px-4 py-8">
+    <div v-if="loadingEvent" class="flex justify-center py-16">
+      <UIcon name="i-lucide-loader-circle" class="size-8 animate-spin text-muted" />
     </div>
 
-    <div v-else-if="eventType" class="booking-container">
-      <div class="event-info">
-        <h1 data-testid="page-heading">{{ eventType.title }}</h1>
-        <p v-if="eventType.description" class="description">{{ eventType.description }}</p>
-        <p class="duration">{{ eventType.duration }} min</p>
-        <p v-if="eventType.ownerName" class="owner">with {{ eventType.ownerName }}</p>
-        <p class="timezone">{{ eventType.timezone }}</p>
+    <UCard v-else-if="loadError" class="mx-auto max-w-md">
+      <div class="flex flex-col items-center gap-3 py-6 text-center">
+        <UIcon name="i-lucide-calendar-x" class="size-10 text-error" />
+        <h1 data-testid="page-heading" class="text-xl font-semibold text-highlighted">
+          Event Not Found
+        </h1>
+        <p class="text-sm text-muted">{{ loadError }}</p>
       </div>
+    </UCard>
 
-      <div class="booking-panel">
-        <div class="calendar-section">
-          <h2>Select a date</h2>
-          <div class="calendar-header">
-            <button type="button" class="nav-btn" data-testid="calendar-prev-month" @click="prevMonth">&lt;</button>
-            <span class="month-label" data-testid="calendar-month-label">{{ monthLabel }}</span>
-            <button type="button" class="nav-btn" data-testid="calendar-next-month" @click="nextMonth">&gt;</button>
+    <div v-else-if="eventType" class="flex flex-col gap-6">
+      <header class="flex flex-col gap-2">
+        <h1 data-testid="page-heading" class="text-2xl font-bold text-highlighted">
+          {{ eventType.title }}
+        </h1>
+        <p v-if="eventType.description" class="text-sm text-muted">{{ eventType.description }}</p>
+        <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted">
+          <span class="inline-flex items-center gap-1">
+            <UIcon name="i-lucide-clock" class="size-4" />{{ eventType.duration }} min
+          </span>
+          <span v-if="eventType.ownerName" class="inline-flex items-center gap-1">
+            <UIcon name="i-lucide-user" class="size-4" />{{ eventType.ownerName }}
+          </span>
+          <span class="inline-flex items-center gap-1">
+            <UIcon name="i-lucide-globe" class="size-4" />{{ eventType.timezone }}
+          </span>
+        </div>
+      </header>
+
+      <div class="grid gap-6 md:grid-cols-2">
+        <UCard data-testid="booking-calendar-card">
+          <template #header>
+            <span class="font-semibold text-highlighted">Select a date</span>
+          </template>
+          <div class="flex justify-center">
+            <UCalendar
+              :model-value="calendarModel"
+              :min-value="minValue"
+              data-testid="booking-calendar"
+              @update:model-value="onSelectDate"
+            />
           </div>
-          <div class="calendar-grid">
-            <div v-for="day in weekDays" :key="day" class="week-day">{{ day }}</div>
+        </UCard>
+
+        <div class="flex flex-col gap-6">
+          <UCard v-if="selectedDate">
+            <template #header>
+              <span class="font-semibold text-highlighted">Available times</span>
+            </template>
+
+            <div v-if="loadingSlots" class="flex justify-center py-4">
+              <UIcon name="i-lucide-loader-circle" class="size-6 animate-spin text-muted" />
+            </div>
+
             <div
-              v-for="(day, idx) in monthDays"
-              :key="idx"
-              :data-testid="day ? 'calendar-day' : undefined"
-              class="calendar-day"
-              :class="{
-                empty: !day,
-                disabled: day && isPast(day),
-                selected: day && selectedDate === formatDate(day),
-              }"
-              @click="day && !isPast(day) && selectDate(day)"
+              v-else-if="slots.length === 0"
+              class="flex flex-col items-center gap-2 py-6 text-center"
+              data-testid="no-slots"
             >
-              <span v-if="day">{{ day.getDate() }}</span>
+              <UIcon name="i-lucide-calendar-off" class="size-8 text-muted" />
+              <p class="text-sm text-muted">No available times on this day</p>
             </div>
-          </div>
-        </div>
 
-        <div v-if="selectedDate" class="slots-section">
-          <h2>Available times</h2>
-          <div v-if="loadingSlots" class="loading">Loading slots...</div>
-          <div v-else-if="slots.length === 0" class="no-slots">No available times</div>
-          <div v-else class="slot-list">
-            <button
-              v-for="slot in slots"
-              :key="slot.start"
-              type="button"
-              class="slot-btn"
-              :class="{ active: selectedSlot?.start === slot.start }"
-              data-testid="time-slot"
-              @click="selectSlot(slot)"
-            >
-              {{ formatSlotTime(slot.start) }}
-            </button>
-          </div>
-        </div>
-
-        <div v-if="selectedSlot" class="form-section">
-          <h2>Your details</h2>
-          <form @submit.prevent="submitBooking">
-            <div class="field">
-              <label for="guestName">Name</label>
-              <input
-                id="guestName"
-                v-model="guestName"
-                type="text"
-                placeholder="Your name"
-                data-testid="guest-name"
-                required
-              >
-            </div>
-            <div class="field">
-              <label for="guestEmail">Email</label>
-              <input
-                id="guestEmail"
-                v-model="guestEmail"
-                type="email"
-                placeholder="you@example.com"
-                data-testid="guest-email"
-                required
-              >
-            </div>
-            <div class="field">
-              <label for="guestNotes">Notes (optional)</label>
-              <textarea
-                id="guestNotes"
-                v-model="guestNotes"
-                placeholder="Anything you'd like to add?"
-                rows="3"
+            <div v-else class="grid grid-cols-2 gap-2 sm:grid-cols-3">
+              <UButton
+                v-for="slot in slots"
+                :key="slot.start"
+                :label="formatSlotTime(slot.start)"
+                :color="selectedSlot?.start === slot.start ? 'primary' : 'neutral'"
+                :variant="selectedSlot?.start === slot.start ? 'solid' : 'outline'"
+                data-testid="time-slot"
+                class="justify-center"
+                @click="selectSlot(slot)"
               />
             </div>
-            <p v-if="bookingError" class="error">{{ bookingError }}</p>
-            <button type="submit" class="btn-book" :disabled="submitting" data-testid="confirm-booking">
-              {{ submitting ? "Booking..." : "Confirm Booking" }}
-            </button>
-          </form>
+          </UCard>
+
+          <UCard v-if="selectedSlot">
+            <template #header>
+              <span class="font-semibold text-highlighted">Your details</span>
+            </template>
+            <UForm :schema="schema" :state="state" class="flex flex-col gap-4" @submit="onSubmit">
+              <UFormField label="Name" name="guestName">
+                <UInput
+                  v-model="state.guestName"
+                  placeholder="Your name"
+                  data-testid="guest-name"
+                  class="w-full"
+                />
+              </UFormField>
+              <UFormField label="Email" name="guestEmail">
+                <UInput
+                  v-model="state.guestEmail"
+                  type="email"
+                  placeholder="you@example.com"
+                  data-testid="guest-email"
+                  class="w-full"
+                />
+              </UFormField>
+              <UFormField label="Notes (optional)" name="guestNotes">
+                <UTextarea
+                  v-model="state.guestNotes"
+                  :rows="3"
+                  placeholder="Anything you'd like to add?"
+                  data-testid="guest-notes"
+                  class="w-full"
+                />
+              </UFormField>
+
+              <UFormField label="Your timezone" name="timezone" hint="Slots are shown in this timezone">
+                <USelectMenu
+                  v-model="selectedTimezone"
+                  :items="timezones"
+                  searchable
+                  searchable-placeholder="Search timezone..."
+                  icon="i-lucide-globe"
+                  data-testid="booking-timezone"
+                  class="w-full"
+                />
+              </UFormField>
+
+              <p
+                v-if="bookingError"
+                class="rounded-md bg-error/10 px-3 py-2 text-sm text-error"
+                role="alert"
+                data-testid="booking-error"
+              >
+                {{ bookingError }}
+              </p>
+
+              <UButton
+                type="submit"
+                :loading="submitting"
+                :label="submitting ? 'Booking...' : 'Confirm Booking'"
+                icon="i-lucide-check"
+                data-testid="confirm-booking"
+                class="w-full justify-center"
+              />
+            </UForm>
+          </UCard>
         </div>
       </div>
     </div>
   </div>
 </template>
-
-<style scoped>
-.booking-page { max-width: 900px; margin: 0 auto; padding: 2rem 1rem; }
-.loading { text-align: center; padding: 3rem; color: #666; }
-.error-block { text-align: center; padding: 3rem; }
-.error-block h1 { margin-bottom: 0.5rem; }
-.error-block p { color: #666; }
-
-.booking-container { display: grid; grid-template-columns: 300px 1fr; gap: 2rem; }
-.event-info h1 { margin-bottom: 0.5rem; }
-.event-info .description { color: #555; margin-bottom: 0.5rem; }
-.event-info .duration { font-weight: 600; color: #0070f3; }
-.event-info .owner { color: #555; }
-.event-info .timezone { color: #999; font-size: 0.85rem; }
-
-.booking-panel { display: flex; flex-direction: column; gap: 1.5rem; }
-.calendar-section h2, .slots-section h2, .form-section h2 { font-size: 1.1rem; margin-bottom: 0.75rem; }
-
-.calendar-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; }
-.month-label { font-weight: 600; }
-.nav-btn { border: 1px solid #ccc; background: #fff; border-radius: 4px; padding: 0.25rem 0.75rem; cursor: pointer; font-size: 1rem; }
-.nav-btn:hover { background: #f5f5f5; }
-
-.calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
-.week-day { text-align: center; font-size: 0.75rem; color: #999; padding: 0.25rem; }
-.calendar-day { text-align: center; padding: 0.5rem 0; border-radius: 4px; cursor: pointer; font-size: 0.9rem; }
-.calendar-day:hover:not(.empty):not(.disabled) { background: #e6f0ff; }
-.calendar-day.empty { visibility: hidden; }
-.calendar-day.disabled { color: #ccc; cursor: not-allowed; }
-.calendar-day.selected { background: #0070f3; color: #fff; }
-
-.no-slots { color: #999; padding: 1rem 0; }
-.slot-list { display: flex; flex-wrap: wrap; gap: 0.5rem; }
-.slot-btn { border: 1px solid #ccc; background: #fff; border-radius: 6px; padding: 0.5rem 1rem; cursor: pointer; font-size: 0.9rem; }
-.slot-btn:hover { border-color: #0070f3; }
-.slot-btn.active { background: #0070f3; color: #fff; border-color: #0070f3; }
-
-.field { margin-bottom: 0.75rem; }
-.field label { display: block; font-weight: 600; margin-bottom: 0.25rem; font-size: 0.85rem; }
-.field input, .field textarea { width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px; font-size: 0.9rem; box-sizing: border-box; }
-.field textarea { resize: vertical; }
-
-.error { color: #cc0000; margin: 0.5rem 0; font-size: 0.85rem; }
-.btn-book { background: #0070f3; color: #fff; border: none; padding: 0.6rem 1.5rem; border-radius: 6px; font-size: 0.95rem; cursor: pointer; width: 100%; margin-top: 0.5rem; }
-.btn-book:hover:not(:disabled) { background: #0051cc; }
-.btn-book:disabled { opacity: 0.5; cursor: not-allowed; }
-
-@media (max-width: 700px) {
-  .booking-container { grid-template-columns: 1fr; }
-}
-</style>
