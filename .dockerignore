@@ -1,0 +1,15 @@
+.git
+.github
+.idea
+.opencode
+docs
+**/node_modules
+**/.nuxt
+**/.output
+**/.gradle
+**/build
+*.log
+.env
+.env.example
+playwright-report
+test-results
