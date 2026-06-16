@@ -14,18 +14,21 @@ function nextWeekday(): Date {
 }
 
 async function navigateToBookingDay(page: Page, target: Date): Promise<void> {
-  const targetMonth = target.toLocaleDateString("en-US", { month: "long", year: "numeric" })
+  const normalize = (s: string | null): string => (s ?? "").replace(/\s+/g, " ").trim()
+  const targetMonth = normalize(
+    target.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+  )
 
   for (let i = 0; i < 3; i++) {
-    const label = await page.getByTestId("calendar-month-label").textContent()
+    const label = normalize(await page.locator("[data-slot='heading']").textContent())
     if (label === targetMonth) break
-    await page.getByTestId("calendar-next-month").click()
+    await page.getByRole("button", { name: "Next month" }).click()
   }
 
-  const dayCell = page.getByTestId("calendar-day").filter({
-    hasText: String(target.getDate()),
-  })
-  await dayCell.click()
+  const dayCell = page
+    .locator("[data-slot='cellTrigger']:not([data-outside-view])")
+    .filter({ hasText: String(target.getDate()) })
+  await dayCell.first().click()
 }
 
 test.describe("Happy path: register → schedule → event type → book → cancel", () => {

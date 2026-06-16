@@ -33,60 +33,63 @@ async function handleCancel() {
 </script>
 
 <template>
-  <div class="cancel-page">
-    <div class="cancel-card">
-      <div v-if="cancelled" class="cancelled-state">
-        <div class="check-icon">
-          <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2">
-            <circle cx="12" cy="12" r="10" />
-            <path d="M9 12l2 2 4-4" />
-          </svg>
+  <div class="mx-auto max-w-md px-4 py-12">
+    <UCard class="text-center">
+      <div v-if="cancelled" class="flex flex-col items-center gap-3 py-4">
+        <div class="flex size-14 items-center justify-center rounded-full bg-success/10">
+          <UIcon name="i-lucide-check" class="size-8 text-success" />
         </div>
-        <h1>Booking Cancelled</h1>
-        <p class="info">Your booking has been successfully cancelled.</p>
-        <NuxtLink to="/" class="btn-done">Done</NuxtLink>
+        <h1 data-testid="booking-cancelled" class="text-xl font-semibold text-highlighted">
+          Booking Cancelled
+        </h1>
+        <p class="text-sm text-muted">Your booking has been successfully cancelled.</p>
+        <UButton
+          to="/"
+          icon="i-lucide-arrow-left"
+          label="Done"
+          data-testid="cancel-done"
+          class="w-full justify-center"
+        />
       </div>
 
-      <div v-else>
-        <h1>Cancel Booking</h1>
-        <p class="confirm-text">
+      <div v-else class="flex flex-col items-center gap-4 py-4">
+        <div class="flex size-14 items-center justify-center rounded-full bg-error/10">
+          <UIcon name="i-lucide-x" class="size-8 text-error" />
+        </div>
+        <h1 data-testid="cancel-heading" class="text-xl font-semibold text-highlighted">
+          Cancel Booking
+        </h1>
+        <p class="text-sm text-muted">
           Are you sure you want to cancel this booking? This action cannot be undone.
         </p>
 
-        <p v-if="error" class="error">{{ error }}</p>
+        <p
+          v-if="error"
+          class="w-full rounded-md bg-error/10 px-3 py-2 text-sm text-error"
+          role="alert"
+          data-testid="cancel-error"
+        >
+          {{ error }}
+        </p>
 
-        <div class="actions">
-          <button
-            type="button"
-            class="btn-cancel"
-            :disabled="cancelling || !id || !token"
-            @click="handleCancel"
-          >
-            <span v-if="cancelling">Cancelling...</span>
-            <span v-else>Yes, Cancel Booking</span>
-          </button>
-          <NuxtLink to="/" class="btn-keep">Keep Booking</NuxtLink>
-        </div>
+        <UButton
+          color="error"
+          :loading="cancelling"
+          :disabled="!id || !token"
+          label="Yes, Cancel Booking"
+          icon="i-lucide-x"
+          data-testid="confirm-cancel"
+          class="w-full justify-center"
+          @click="handleCancel"
+        />
+        <UButton
+          to="/"
+          color="neutral"
+          variant="ghost"
+          label="Keep Booking"
+          data-testid="keep-booking"
+        />
       </div>
-    </div>
+    </UCard>
   </div>
 </template>
-
-<style scoped>
-.cancel-page { max-width: 500px; margin: 0 auto; padding: 3rem 1rem; text-align: center; }
-.cancel-card { background: #fff; border: 1px solid #e0e0e0; border-radius: 12px; padding: 2.5rem 2rem; }
-.cancel-card h1 { margin-bottom: 1rem; }
-.confirm-text { color: #555; margin-bottom: 2rem; }
-.error { color: #cc0000; margin-bottom: 1rem; }
-.actions { display: flex; flex-direction: column; gap: 0.75rem; align-items: center; }
-.btn-cancel { background: #dc2626; color: #fff; border: none; padding: 0.65rem 2rem; border-radius: 6px; cursor: pointer; font-size: 0.95rem; width: 100%; }
-.btn-cancel:hover:not(:disabled) { background: #b91c1c; }
-.btn-cancel:disabled { opacity: 0.6; cursor: not-allowed; }
-.btn-keep { color: #666; text-decoration: none; font-size: 0.9rem; }
-.btn-keep:hover { text-decoration: underline; }
-.cancelled-state { }
-.cancelled-state .check-icon { margin-bottom: 1rem; }
-.cancelled-state .info { color: #666; margin-bottom: 1.5rem; }
-.btn-done { display: inline-block; background: #0070f3; color: #fff; text-decoration: none; padding: 0.6rem 2rem; border-radius: 6px; font-size: 0.95rem; }
-.btn-done:hover { background: #0051cc; }
-</style>
